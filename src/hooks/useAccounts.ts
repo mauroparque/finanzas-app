@@ -21,7 +21,7 @@ export const useAccounts = (onlyActive = true) => {
     useEffect(() => {
         setLoading(true);
         const collectionRef = collection(db, 'accounts');
-        let q = query(collectionRef, orderBy('name'));
+        let q = query(collectionRef);
 
         if (onlyActive) {
             q = query(q, where('isActive', '==', true));

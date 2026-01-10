@@ -84,9 +84,10 @@ export const useTransactions = (filters?: { category?: string; month?: Date }) =
                 // For 'Efectivo' fallback, we might need to ensure it exists.
                 // For safety: check generic fallback or handle error.
                 // We'll trust the selector for now.
-                batch.update(accountRef, {
+                // Use set with merge to ensure doc exists (e.g. for 'Efectivo' fallback)
+                batch.set(accountRef, {
                     balance: increment(balanceChange)
-                });
+                }, { merge: true });
             }
 
             await batch.commit();
