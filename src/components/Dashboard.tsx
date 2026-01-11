@@ -3,6 +3,7 @@ import React from 'react';
 import { TrendingDown, Wallet, Calendar, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
 import { useAccounts } from '../hooks/useAccounts';
 import { useBudgets } from '../hooks/useBudgets';
+import { useServices } from '../hooks/useServices';
 
 const Dashboard: React.FC = () => {
   const { accounts, loading: loadingAccounts } = useAccounts();
@@ -10,14 +11,18 @@ const Dashboard: React.FC = () => {
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
+  /* Services Logic for Deadlines */
+  const { services, loading: loadingServices } = useServices();
+
+  const upcomingDeadlines = services
+    .filter(s => s.status !== 'PAID')
+    .sort((a, b) => a.dueDate - b.dueDate) // Sort by day of month
+    .slice(0, 3); // Take top 3
+
   // Fallback data if no budgets yet
   const displayBudgets = budgets.length > 0 ? budgets : [];
 
-  const upcomingDeadlines = [
-    { name: 'EPEC (Luz)', amount: 28302, due: '10/12', type: 'Servicio', urgent: true },
-    { name: 'Cooperativa', amount: 15767, due: '14/12', type: 'Servicio', urgent: false },
-    { name: 'BancoRoela', amount: 6900, due: '12/12', type: 'Servicio', urgent: false },
-  ];
+
 
   const getCategoryIcon = (category: string) => {
     switch (category.toLowerCase()) {

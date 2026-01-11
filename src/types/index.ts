@@ -14,8 +14,13 @@ export interface ServiceItem {
     name: string;
     amount: number;
     status: ServiceStatus;
-    variation: 'up' | 'down' | 'stable';
-    dueDate: string;
+    variation?: 'up' | 'down' | 'stable';
+    dueDate: number; // Day of month (1-31)
+    currentDueDate?: Timestamp; // Calculated for current month
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    category?: string;
+    description?: string;
 }
 
 export interface CreditCardItem {

@@ -16,7 +16,7 @@ const App: React.FC = () => {
     switch (activeScreen) {
       case 'dashboard': return <Dashboard />;
       case 'cards': return <CardsView />;
-      case 'services': return <ServicesView />;
+      case 'services': return <ServicesView onBack={() => setActiveScreen('dashboard')} />;
       default: return <Dashboard />;
     }
   };
