@@ -8,29 +8,23 @@ import { useServices } from '../hooks/useServices';
 const Dashboard: React.FC = () => {
   const { accounts, loading: loadingAccounts } = useAccounts();
   const { budgets, loading: loadingBudgets } = useBudgets();
+  const { services, loading: loadingServices } = useServices();
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
-  /* Services Logic for Deadlines */
-  const { services, loading: loadingServices } = useServices();
-
   const upcomingDeadlines = services
     .filter(s => s.status !== 'PAID')
-    .sort((a, b) => a.dueDate - b.dueDate) // Sort by day of month
-    .slice(0, 3); // Take top 3
+    .sort((a, b) => a.dueDate - b.dueDate)
+    .slice(0, 3);
 
-  // Fallback data if no budgets yet
   const displayBudgets = budgets.length > 0 ? budgets : [];
 
-
-
   const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'alimentos': return <ShoppingBag size={18} />;
-      case 'animales': return <PawPrint size={18} />;
-      case 'servicios': return <Coffee size={18} />;
-      default: return <ShoppingBag size={18} />;
-    }
+    const c = category.toLowerCase();
+    if (c.includes('aliment') || c.includes('comida') || c.includes('super')) return <ShoppingBag size={18} />;
+    if (c.includes('animal') || c.includes('mascota')) return <PawPrint size={18} />;
+    if (c.includes('servici') || c.includes('impuesto')) return <Coffee size={18} />;
+    return <ShoppingBag size={18} />;
   };
 
   if (loadingAccounts && accounts.length === 0) {
@@ -43,7 +37,7 @@ const Dashboard: React.FC = () => {
       <header className="flex justify-between items-center">
         <div>
           <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-0.5">Familia Mau & Agos</p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Diciembre 2025</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Enero 2026</h1>
         </div>
         <div className="w-10 h-10 bg-slate-800/50 backdrop-blur-sm rounded-full border border-slate-700 flex items-center justify-center text-indigo-400 shadow-lg">
           <Calendar size={18} strokeWidth={2.5} />
@@ -52,10 +46,8 @@ const Dashboard: React.FC = () => {
 
       {/* Hero Balance Card */}
       <section className="relative overflow-hidden rounded-[2rem] p-6 shadow-2xl shadow-indigo-900/30 border border-white/10 group">
-        {/* Card Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800"></div>
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-8">
@@ -70,7 +62,6 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex gap-3">
-            {/* Account Summary Pills */}
             {accounts.slice(0, 2).map(acc => (
               <div key={acc.id} className="flex-1 bg-black/20 backdrop-blur-md rounded-2xl p-3 border border-white/5 hover:bg-black/30 transition-colors">
                 <div className="flex items-center gap-1.5 mb-1 text-indigo-200">
@@ -99,9 +90,6 @@ const Dashboard: React.FC = () => {
       <section className="space-y-4">
         <div className="flex justify-between items-center px-1">
           <h4 className="font-bold text-slate-200 text-lg">Presupuestos</h4>
-          {displayBudgets.length > 0 && (
-            <span className="px-2 py-1 bg-slate-800 rounded-lg text-[10px] text-slate-400 font-bold uppercase tracking-wider border border-slate-700">Estado</span>
-          )}
         </div>
 
         <div className="grid gap-3">
@@ -123,12 +111,12 @@ const Dashboard: React.FC = () => {
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-3">
                       <div className={`p-2.5 rounded-xl bg-${color}-500/10 text-${color}-400 group-hover:scale-110 transition-transform`}>
-                        {getCategoryIcon(b.category)}
+                        {getCategoryIcon(b.target_name)}
                       </div>
                       <div>
-                        <span className="block font-semibold text-slate-200 text-sm">{b.category}</span>
+                        <span className="block font-semibold text-slate-200 text-sm">{b.target_name}</span>
                         <span className={`text-[10px] font-bold uppercase ${isOver ? 'text-rose-400' : 'text-slate-500'}`}>
-                          {isOver ? 'Excedido' : 'En rango'}
+                          {b.unit || 'GLOBAL'} • {isOver ? 'Excedido' : 'En rango'}
                         </span>
                       </div>
                     </div>
@@ -138,10 +126,9 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Custom Progress Bar */}
-                  <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-white/5 relative">
+                  <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden relative">
                     <div
-                      className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-${color}-600 to-${color}-400 shadow-[0_0_10px_rgba(0,0,0,0.3)]`}
+                      className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-${color}-500`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -152,31 +139,35 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Próximos Vencimientos - Keeping static for now as Service integration is next phase or needs data */}
+      {/* Próximos Vencimientos */}
       <section className="space-y-4">
         <div className="flex justify-between items-center px-1">
           <h4 className="font-bold text-slate-200 text-lg">Próximos Vencimientos</h4>
         </div>
 
         <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 overflow-hidden">
-          {upcomingDeadlines.map((v, i) => (
-            <div key={i} className="flex justify-between items-center p-4 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-1.5 h-1.5 rounded-full ${v.urgent ? 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)] animate-pulse' : 'bg-slate-600'}`}></div>
-                <div>
-                  <p className="text-slate-200 font-semibold text-sm">{v.name}</p>
-                  <p className="text-slate-500 text-[10px] font-bold uppercase">{v.type}</p>
+          {upcomingDeadlines.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 text-sm">Sin vencimientos próximos</div>
+          ) : (
+            upcomingDeadlines.map((v) => (
+              <div key={v.id} className="flex justify-between items-center p-4 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`w-1.5 h-1.5 rounded-full ${v.status === 'RESERVED' ? 'bg-amber-500' : 'bg-rose-500 animate-pulse'}`}></div>
+                  <div>
+                    <p className="text-slate-200 font-semibold text-sm">{v.name}</p>
+                    <p className="text-slate-500 text-[10px] font-bold uppercase">{v.unit} • {v.concept}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-slate-200 font-bold text-sm tracking-tight">${v.amount.toLocaleString()}</p>
+                  <div className="flex items-center justify-end gap-1 text-slate-500">
+                    <Calendar size={10} />
+                    <p className="text-[10px] font-medium">Día {v.dueDate}</p>
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-slate-200 font-bold text-sm tracking-tight">${v.amount.toLocaleString()}</p>
-                <div className="flex items-center justify-end gap-1 text-slate-500">
-                  <Calendar size={10} />
-                  <p className="text-[10px] font-medium">{v.due}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
           <button className="w-full py-3 text-xs font-bold text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/5 transition-colors flex items-center justify-center gap-2">
             Ver todo el calendario <ArrowRight size={12} />
           </button>

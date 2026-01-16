@@ -12,23 +12,27 @@ import {
     where
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { ServiceItem, ServiceStatus } from '../types';
+import { Service, ServiceStatus } from '../types';
 
-export const useServices = () => {
-    const [services, setServices] = useState<ServiceItem[]>([]);
+export const useServices = (onlyActive = true) => {
+    const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         setLoading(true);
         const collectionRef = collection(db, 'services');
-        const q = query(collectionRef, orderBy('dueDate'));
+        let q = query(collectionRef, orderBy('dueDate'));
+
+        if (onlyActive) {
+            q = query(q, where('isActive', '==', true));
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            })) as ServiceItem[];
+            })) as Service[];
             setServices(data);
             setLoading(false);
         }, (err) => {
@@ -38,19 +42,15 @@ export const useServices = () => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [onlyActive]);
 
-    const addService = async (service: Omit<ServiceItem, 'id' | 'createdAt' | 'updatedAt' | 'currentDueDate'>) => {
+    const addService = async (service: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {
-            const now = new Date();
-            // Calculate current due date based on day of month
-            const currentDueDate = new Date(now.getFullYear(), now.getMonth(), service.dueDate);
-
+            const now = Timestamp.now();
             await addDoc(collection(db, 'services'), {
                 ...service,
-                currentDueDate: Timestamp.fromDate(currentDueDate),
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now()
+                createdAt: now,
+                updatedAt: now
             });
         } catch (err) {
             console.error("Error adding service:", err);
@@ -76,7 +76,6 @@ export const useServices = () => {
             const service = services.find(s => s.id === id);
             if (!service) return;
 
-            // Calculate variation
             let variation: 'up' | 'down' | 'stable' = 'stable';
             if (service.amount > 0) {
                 if (amount > service.amount) variation = 'up';
@@ -85,6 +84,7 @@ export const useServices = () => {
 
             const docRef = doc(db, 'services', id);
             await updateDoc(docRef, {
+                last_amount: service.amount,
                 amount,
                 variation,
                 updatedAt: Timestamp.now()

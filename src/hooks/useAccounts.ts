@@ -6,9 +6,8 @@ import {
     onSnapshot,
     addDoc,
     updateDoc,
-    deleteDoc,
     doc,
-    orderBy
+    Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Account } from '../types';
@@ -43,13 +42,21 @@ export const useAccounts = (onlyActive = true) => {
         return () => unsubscribe();
     }, [onlyActive]);
 
-    const addAccount = async (account: Omit<Account, 'id'>) => {
-        await addDoc(collection(db, 'accounts'), account);
+    const addAccount = async (account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>) => {
+        const now = Timestamp.now();
+        await addDoc(collection(db, 'accounts'), {
+            ...account,
+            createdAt: now,
+            updatedAt: now
+        });
     };
 
     const updateAccount = async (id: string, updates: Partial<Account>) => {
         const docRef = doc(db, 'accounts', id);
-        await updateDoc(docRef, updates);
+        await updateDoc(docRef, {
+            ...updates,
+            updatedAt: Timestamp.now()
+        });
     };
 
     return { accounts, loading, error, addAccount, updateAccount };
