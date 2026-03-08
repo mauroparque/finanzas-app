@@ -11,24 +11,36 @@ This project uses a **skills** system located in `.agents/skills/`. All availabl
 ### Rules
 
 1. **Read `using-superpowers`** at the start of every conversation — it is the only mandatory skill.
-2. **Scan available skills** and load all that match your current task before acting.
-3. Skills cover process (brainstorming, debugging, TDD), technology (React/Vite best practices, frontend design), and quality (code review, verification). Load technology-specific skills when the task involves those technologies.
-4. **Rigid skills** (TDD, debugging, verification, receiving-code-review): follow strictly. **Flexible skills** (frontend-design, vercel-react-best-practices): adapt principles to context.
+2. **Consult [SKILLS_INDEX.md](.agents/skills/SKILLS_INDEX.md)** to find skills matching your current task. The index has a signal→skill routing table — scan it and load all matching skills before acting.
+3. Skills cover process (brainstorming, debugging, TDD), technology (React/Vite, Postgres, frontend design), and quality (code review, verification). Load technology-specific skills when the task involves those technologies.
+4. **Rigid skills** (TDD, debugging, verification, receiving-code-review, writing-plans): follow strictly. **Flexible skills** (frontend-design, vercel-react-best-practices, supabase-postgres-best-practices): adapt principles to context.
 
 ### Available Skills Quick Reference
 
-| Signal | Skill |
-|---|---|
-| "let's build / add / redesign" | `brainstorming` → then `writing-plans` |
-| Any implementation task | `test-driven-development` |
-| "UI / component / page" | `frontend-design` |
-| React/Vite code | `vercel-react-best-practices` |
-| "bug / broken / not working" | `systematic-debugging` |
-| Finishing feature branch | `finishing-a-development-branch` |
-| Code review feedback | `receiving-code-review` |
-| "done / complete" claim | `verification-before-completion` |
-| Multiple independent tasks | `dispatching-parallel-agents` |
-| Feature isolation needed | `using-git-worktrees` |
+> For the full signal→skill routing table, see **[SKILLS_INDEX.md](.agents/skills/SKILLS_INDEX.md)**.
+
+| Signal | Skill | Type |
+|---|---|---|
+| Start of conversation | `using-superpowers` | **Mandatory** |
+| "let's build / add / redesign" | `brainstorming` → `writing-plans` | Rigid |
+| Execute plan (same session) | `subagent-driven-development` | Rigid |
+| Execute plan (separate session) | `executing-plans` | Rigid |
+| Any implementation task | `test-driven-development` | Rigid |
+| "bug / broken / not working" | `systematic-debugging` | Rigid |
+| Code review feedback received | `receiving-code-review` | Rigid |
+| Requesting a code review | `requesting-code-review` | Rigid |
+| "done / complete" claim | `verification-before-completion` | Rigid |
+| Multiple independent tasks | `dispatching-parallel-agents` | Rigid |
+| Feature isolation needed | `using-git-worktrees` | Flexible |
+| Finishing feature branch | `finishing-a-development-branch` | Flexible |
+| "UI / component / page" | `frontend-design` | Flexible |
+| React/Vite code | `vercel-react-best-practices` | Flexible |
+| Review React code, anti-patterns | `typescript-react-reviewer` | Flexible |
+| Generics, advanced types, type safety | `typescript-advanced-types` | Flexible |
+| Postgres, SQL, schema, PostgREST | `supabase-postgres-best-practices` | Flexible |
+| E2E tests, browser tests | `playwright-best-practices` | Flexible |
+| Changelog, release notes, versioning | `changelog-automation` | Flexible |
+| Find/install new skills | `find-skills` | Flexible |
 
 ---
 
