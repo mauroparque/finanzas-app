@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { TrendingDown, Wallet, Calendar, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
-import { useAccounts } from '../hooks/useAccounts';
+import { useMediosPago } from '../hooks/useMediosPago';
 import { useBudgets } from '../hooks/useBudgets';
 import { useServices } from '../hooks/useServices';
 
 const Dashboard: React.FC = () => {
-  const { accounts, loading: loadingAccounts } = useAccounts();
+  const { accounts, loading: loadingAccounts } = useMediosPago();
   const { budgets, loading: loadingBudgets } = useBudgets();
   const { services, loading: loadingServices } = useServices();
 
