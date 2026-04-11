@@ -1,4 +1,4 @@
-# AGENTS.md — Finanzas 2.0
+# CLAUDE.md — Finanzas 2.0
 
 This file contains guidelines and commands for agentic coding tools working in this repository.
 
@@ -19,28 +19,28 @@ This project uses a **skills** system located in `.agents/skills/`. All availabl
 
 > For the full signal→skill routing table, see **[SKILLS_INDEX.md](.agents/skills/SKILLS_INDEX.md)**.
 
-| Signal | Skill | Type |
-|---|---|---|
-| Start of conversation | `using-superpowers` | **Mandatory** |
-| "let's build / add / redesign" | `brainstorming` → `writing-plans` | Rigid |
-| Execute plan (same session) | `subagent-driven-development` | Rigid |
-| Execute plan (separate session) | `executing-plans` | Rigid |
-| Any implementation task | `test-driven-development` | Rigid |
-| "bug / broken / not working" | `systematic-debugging` | Rigid |
-| Code review feedback received | `receiving-code-review` | Rigid |
-| Requesting a code review | `requesting-code-review` | Rigid |
-| "done / complete" claim | `verification-before-completion` | Rigid |
-| Multiple independent tasks | `dispatching-parallel-agents` | Rigid |
-| Feature isolation needed | `using-git-worktrees` | Flexible |
-| Finishing feature branch | `finishing-a-development-branch` | Flexible |
-| "UI / component / page" | `frontend-design` | Flexible |
-| React/Vite code | `vercel-react-best-practices` | Flexible |
-| Review React code, anti-patterns | `typescript-react-reviewer` | Flexible |
-| Generics, advanced types, type safety | `typescript-advanced-types` | Flexible |
-| Postgres, SQL, schema, PostgREST | `supabase-postgres-best-practices` | Flexible |
-| E2E tests, browser tests | `playwright-best-practices` | Flexible |
-| Changelog, release notes, versioning | `changelog-automation` | Flexible |
-| Find/install new skills | `find-skills` | Flexible |
+| Signal                                | Skill                              | Type          |
+| ------------------------------------- | ---------------------------------- | ------------- |
+| Start of conversation                 | `using-superpowers`                | **Mandatory** |
+| "let's build / add / redesign"        | `brainstorming` → `writing-plans`  | Rigid         |
+| Execute plan (same session)           | `subagent-driven-development`      | Rigid         |
+| Execute plan (separate session)       | `executing-plans`                  | Rigid         |
+| Any implementation task               | `test-driven-development`          | Rigid         |
+| "bug / broken / not working"          | `systematic-debugging`             | Rigid         |
+| Code review feedback received         | `receiving-code-review`            | Rigid         |
+| Requesting a code review              | `requesting-code-review`           | Rigid         |
+| "done / complete" claim               | `verification-before-completion`   | Rigid         |
+| Multiple independent tasks            | `dispatching-parallel-agents`      | Rigid         |
+| Feature isolation needed              | `using-git-worktrees`              | Flexible      |
+| Finishing feature branch              | `finishing-a-development-branch`   | Flexible      |
+| "UI / component / page"               | `frontend-design`                  | Flexible      |
+| React/Vite code                       | `vercel-react-best-practices`      | Flexible      |
+| Review React code, anti-patterns      | `typescript-react-reviewer`        | Flexible      |
+| Generics, advanced types, type safety | `typescript-advanced-types`        | Flexible      |
+| Postgres, SQL, schema, PostgREST      | `supabase-postgres-best-practices` | Flexible      |
+| E2E tests, browser tests              | `playwright-best-practices`        | Flexible      |
+| Changelog, release notes, versioning  | `changelog-automation`             | Flexible      |
+| Find/install new skills               | `find-skills`                      | Flexible      |
 
 ---
 
@@ -140,25 +140,25 @@ Tables in **PostgreSQL** on the VPS (exposed via PostgREST):
 
 ### Existing (do not drop or rename)
 
-| Table | Purpose |
-|---|---|
-| `movimientos` | Core financial transactions (gastos, ingresos) |
-| `medios_pago` | Payment accounts/methods (bank, cash, MP, etc.) |
+| Table                 | Purpose                                                  |
+| --------------------- | -------------------------------------------------------- |
+| `movimientos`         | Core financial transactions (gastos, ingresos)           |
+| `medios_pago`         | Payment accounts/methods (bank, cash, MP, etc.)          |
 | `categorias_maestras` | Classification hierarchy (unidad → categoria → concepto) |
-| `bot_sessions` | Telegram bot conversation state |
-| `chat_histories` | Bot chat history (used by n8n/AI) |
+| `bot_sessions`        | Telegram bot conversation state                          |
+| `chat_histories`      | Bot chat history (used by n8n/AI)                        |
 
 ### Added in Migration 001
 
-| Table | Purpose |
-|---|---|
-| `servicios_definicion` | Templates for recurring services (EPEC, Netflix, etc.) |
-| `ingresos_definicion` | Templates for income sources (Honorarios, Alquiler cobrado, etc.) |
-| `presupuestos_definicion` | Default budget limits per category |
-| `movimientos_previstos_mes` | Monthly occurrences from definitions (PENDING→PAID workflow) |
-| `cuotas_tarjeta` | Credit card installment purchases |
-| `prestamos` | Bank loans with installment tracking |
-| `cotizaciones_fx` | Cached FX rates (ARS/USD, ARS/BRL) from CriptoYa |
+| Table                       | Purpose                                                           |
+| --------------------------- | ----------------------------------------------------------------- |
+| `servicios_definicion`      | Templates for recurring services (EPEC, Netflix, etc.)            |
+| `ingresos_definicion`       | Templates for income sources (Honorarios, Alquiler cobrado, etc.) |
+| `presupuestos_definicion`   | Default budget limits per category                                |
+| `movimientos_previstos_mes` | Monthly occurrences from definitions (PENDING→PAID workflow)      |
+| `cuotas_tarjeta`            | Credit card installment purchases                                 |
+| `prestamos`                 | Bank loans with installment tracking                              |
+| `cotizaciones_fx`           | Cached FX rates (ARS/USD, ARS/BRL) from CriptoYa                  |
 
 ### Key Column Conventions
 
@@ -176,28 +176,28 @@ Tables in **PostgreSQL** on the VPS (exposed via PostgREST):
 
 ```typescript
 // External libraries — named imports, no barrel files
-import { useState, useMemo } from 'react';
-import { Calendar, ArrowRight } from 'lucide-react';
+import { useState, useMemo } from "react";
+import { Calendar, ArrowRight } from "lucide-react";
 
 // Internal config/utils — relative paths
-import { apiGet, apiPost } from '../config/api';
-import { cn } from '../utils/cn';
+import { apiGet, apiPost } from "../config/api";
+import { cn } from "../utils/cn";
 
 // Types — always use `type` keyword
-import type { Movimiento, MedioPago } from '../types';
+import type { Movimiento, MedioPago } from "../types";
 ```
 
 ### Naming Conventions
 
-| Entity | Convention | Example |
-|---|---|---|
-| Components | PascalCase | `TransactionForm`, `CotizacionWidget` |
-| Hooks | `use` + PascalCase | `useMovimientos`, `useCotizaciones` |
-| Types/Interfaces | PascalCase | `Movimiento`, `ServicioDefinicion` |
+| Entity              | Convention                      | Example                                                          |
+| ------------------- | ------------------------------- | ---------------------------------------------------------------- |
+| Components          | PascalCase                      | `TransactionForm`, `CotizacionWidget`                            |
+| Hooks               | `use` + PascalCase              | `useMovimientos`, `useCotizaciones`                              |
+| Types/Interfaces    | PascalCase                      | `Movimiento`, `ServicioDefinicion`                               |
 | Input/Partial types | `Omit<T, 'id' \| 'created_at'>` | `type MovimientoInput = Omit<Movimiento, 'id' \| 'fecha_carga'>` |
-| DB-mapped fields | snake_case | `fecha_operation`, `medio_pago` |
-| Frontend-only state | camelCase | `isLoading`, `activeScreen` |
-| Constants | SCREAMING_SNAKE | `VITE_API_URL`, `UNIDADES` |
+| DB-mapped fields    | snake_case                      | `fecha_operation`, `medio_pago`                                  |
+| Frontend-only state | camelCase                       | `isLoading`, `activeScreen`                                      |
+| Constants           | SCREAMING_SNAKE                 | `VITE_API_URL`, `UNIDADES`                                       |
 
 ### TypeScript
 
@@ -219,11 +219,16 @@ import type { Movimiento, MedioPago } from '../types';
 interface CotizacionCardProps {
   label: string;
   value: number;
-  currency: 'USD' | 'BRL';
-  trend?: 'up' | 'down' | 'stable';
+  currency: "USD" | "BRL";
+  trend?: "up" | "down" | "stable";
 }
 
-export const CotizacionCard = ({ label, value, currency, trend }: CotizacionCardProps) => {
+export const CotizacionCard = ({
+  label,
+  value,
+  currency,
+  trend,
+}: CotizacionCardProps) => {
   // ...
 };
 ```
@@ -251,6 +256,7 @@ import { cn } from '../utils/cn';
 ```
 
 **Design tokens:**
+
 - Backgrounds: `stone-50` (light), `stone-900` (dark)
 - Accent: `terracotta` (primary actions/active states), `sage` (secondary), `navy` (text/links)
 - Text: `stone-800` (primary), `stone-500` (secondary/muted)
@@ -320,6 +326,7 @@ docs/
 ```
 
 **Reglas:**
+
 - Cada plan debe referenciar el documento de diseño que lo originó.
 - Actualizar `docs/README.md` cada vez que se crea un documento.
 - Commits de documentación: `docs(plans): ...` / `docs(technical): ...`
@@ -338,6 +345,7 @@ Scopes: movimientos, tarjetas, servicios, dashboard, cotizaciones, api, ui, db
 ```
 
 **Examples:**
+
 ```bash
 git commit -m "feat(movimientos): add income/expense type field to transaction form"
 git commit -m "fix(api): handle PostgREST 401 errors gracefully"
@@ -358,14 +366,14 @@ docs/<topic>         # Documentation only
 
 ## Key Files
 
-| File | Purpose |
-|---|---|
-| `src/types/index.ts` | All domain types — source of truth |
-| `src/config/api.ts` | PostgREST fetch client |
-| `src/config/classificationMap.ts` | Unit→Category→Concept→Detail hierarchy |
-| `src/App.tsx` | App shell, screen routing, FAB, navigation |
-| `docs/plans/2026-03-08-finanzas-rearchitecture-design.md` | Original design document |
-| `docs/plans/2026-03-08-finanzas-implementation-plan.md` | Implementation plan |
-| `tailwind.config.js` | Tailwind + Editorial Orgánico design tokens |
-| `firebase.json` | Hosting config (deploy only) |
-| `supabase/migrations/` | SQL migration scripts for the PostgreSQL VPS DB |
+| File                                                      | Purpose                                         |
+| --------------------------------------------------------- | ----------------------------------------------- |
+| `src/types/index.ts`                                      | All domain types — source of truth              |
+| `src/config/api.ts`                                       | PostgREST fetch client                          |
+| `src/config/classificationMap.ts`                         | Unit→Category→Concept→Detail hierarchy          |
+| `src/App.tsx`                                             | App shell, screen routing, FAB, navigation      |
+| `docs/plans/2026-03-08-finanzas-rearchitecture-design.md` | Original design document                        |
+| `docs/plans/2026-03-08-finanzas-implementation-plan.md`   | Implementation plan                             |
+| `tailwind.config.js`                                      | Tailwind + Editorial Orgánico design tokens     |
+| `firebase.json`                                           | Hosting config (deploy only)                    |
+| `supabase/migrations/`                                    | SQL migration scripts for the PostgreSQL VPS DB |

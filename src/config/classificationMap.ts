@@ -1,9 +1,19 @@
-// Mapa Maestro de Clasificación Financiera
-// Este archivo define la jerarquía completa para clasificación de transacciones.
+/**
+ * Mapa Maestro de Clasificación Financiera (Spec v1.0)
+ *
+ * Estructura: Macro → Categoría → Concepto → Detalle (texto libre)
+ *
+ * Las "Unidades" (HOGAR, BRASIL, PROFESIONAL) son un atributo separado
+ * que proporciona contexto geográfico/funcional, no jerarquía.
+ */
+
+export interface DetailOption {
+    name: string;
+}
 
 export interface ConceptOption {
     name: string;
-    details: string[]; // Sugerencias de detalle
+    details?: string[];  // Ejemplos/sugerencias
 }
 
 export interface CategoryOption {
@@ -11,100 +21,455 @@ export interface CategoryOption {
     concepts: ConceptOption[];
 }
 
-export interface UnitConfig {
-    name: 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
+export interface MacroConfig {
+    name: 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
     categories: CategoryOption[];
 }
 
-export const CLASSIFICATION_MAP: UnitConfig[] = [
+export const CLASSIFICATION_MAP: MacroConfig[] = [
+    // ========================================================================
+    // VIVIR — Gastos necesarios para sostener la vida cotidiana
+    // ========================================================================
     {
-        name: 'HOGAR',
+        name: 'VIVIR',
         categories: [
             {
-                name: 'Vivienda y Vida Diaria',
+                name: 'Vivienda',
                 concepts: [
-                    { name: 'Alquiler', details: ['Balbuena Guillermo Ariel', 'Sanchez Facundo'] },
-                    { name: 'Impuestos', details: ['Cooperativa Horizonte', 'Banco Roela'] },
-                    { name: 'Servicios', details: ['EPEC', 'Ecogas', 'Personal'] },
-                    { name: 'Abastecimiento', details: ['Carnicería', 'Verdulería', 'Pescadería', 'Panadería', 'Supermercado'] },
-                    { name: 'Mascotas', details: ['Bocantino', 'Veterinaria'] },
-                    { name: 'Equipamiento', details: ['Electrodomésticos', 'Arreglos', 'Muebles'] },
+                    {
+                        name: 'Alquiler',
+                        details: ['Alta Gracia', 'Balbuena Guillermo Ariel', 'Renovación contrato'],
+                    },
+                    {
+                        name: 'Mantenimiento hogar',
+                        details: ['Plomero', 'Electricista', 'Pintura', 'Arreglos varios'],
+                    },
+                    {
+                        name: 'Honorarios inmobiliaria',
+                        details: ['Comisión renovación', 'Gestión contrato'],
+                    },
                 ]
             },
             {
-                name: 'Auto',
+                name: 'Alimentación',
                 concepts: [
-                    { name: 'Seguros', details: ['Sancor Seguros'] },
-                    { name: 'Transporte', details: ['Nafta', 'Peajes'] },
+                    {
+                        name: 'Supermercado',
+                        details: ['Coto', 'Jumbo', 'Carrefour', 'Hipermercado'],
+                    },
+                    {
+                        name: 'Verdulería',
+                        details: ['Frutas frescas', 'Verduras'],
+                    },
+                    {
+                        name: 'Carnicería',
+                        details: ['Cortes de carne'],
+                    },
+                    {
+                        name: 'Panadería',
+                        details: ['Pan', 'Facturas', 'Productos de panadería'],
+                    },
+                    {
+                        name: 'Mayorista',
+                        details: ['Becerra', 'Almacén mayorista'],
+                    },
+                    {
+                        name: 'Agua',
+                        details: ['Mite', 'Bidones de agua'],
+                    },
+                    {
+                        name: 'Quesería / fiambrería',
+                        details: ['Quesos', 'Fiambres', 'Delicatessen'],
+                    },
                 ]
             },
             {
-                name: 'Personal',
+                name: 'Servicios',
                 concepts: [
-                    { name: 'Social y Salidas', details: ['Comidas/Salidas', 'Cine', 'Teatro', 'Juntada con amigos'] },
-                    { name: 'Cuidado y Salud', details: ['Peluquería', 'Farmacia', 'Consulta médica'] },
-                    { name: 'Compras personales', details: ['Ropa', 'Calzado', 'Tecnología'] },
-                    { name: 'Viajes y Escapadas', details: ['Hoteles', 'Pasajes', 'Peajes de viaje', 'Gastos vacaciones'] },
-                    { name: 'Ahorros e Inversión', details: ['Transferencias a cuentas de inversión', 'Compra de dólares', 'Plazo fijo'] },
+                    {
+                        name: 'EPEC',
+                        details: ['Luz', 'Empresa Provincial de Energía de Córdoba'],
+                    },
+                    {
+                        name: 'Cooperativa',
+                        details: ['Agua potable', 'Cooperativa local'],
+                    },
+                    {
+                        name: 'Personal',
+                        details: ['Celular', 'Plan de telefonía móvil'],
+                    },
+                    {
+                        name: 'Nuevo Liniers',
+                        details: ['Expensas', 'Administración del complejo'],
+                    },
+                    {
+                        name: 'BancoRoela',
+                        details: ['Mantenimiento de cuenta bancaria'],
+                    },
+                    {
+                        name: 'Condominio',
+                        details: ['Brasil', 'Balneário Camboriú', 'Administración del edificio'],
+                    },
+                    {
+                        name: 'Celesc',
+                        details: ['Luz Brasil', 'Electricidad del inmueble'],
+                    },
+                    {
+                        name: 'Ambiental',
+                        details: ['Residuos Brasil', 'Recolección de residuos'],
+                    },
+                    {
+                        name: 'Cable CCS',
+                        details: ['Cable/internet Brasil', 'CCS Camboriú Cable System'],
+                    },
+                    {
+                        name: 'IPTU',
+                        details: ['Brasil', 'Impuesto predial territorial urbano'],
+                    },
                 ]
             },
             {
-                name: 'Pasivos',
+                name: 'Animales',
                 concepts: [
-                    { name: 'Cuota Préstamo', details: ['Préstamo BNA', 'Préstamo ANSES', 'Préstamo BBVA'] },
-                    { name: 'Pago Tarjeta', details: ['Visa BNA', 'Mastercard BNA', 'Visa BBVA'] },
+                    {
+                        name: 'Bocantino',
+                        details: ['Comida de mascotas', 'Perros', 'Gatos'],
+                    },
+                    {
+                        name: 'Veterinaria',
+                        details: ['Consultas', 'Análisis', 'Tratamientos'],
+                    },
+                    {
+                        name: 'Guardería',
+                        details: ['Estadía de perros', 'Cuidado durante viajes'],
+                    },
+                    {
+                        name: 'Vacunas y antiparasitarios',
+                        details: ['Vacunación periódica', 'Desparasitación'],
+                    },
                 ]
-            }
+            },
+            {
+                name: 'Salud',
+                concepts: [
+                    {
+                        name: 'Médico / consulta',
+                        details: ['Especialista', 'Consulta médica general'],
+                    },
+                    {
+                        name: 'Medicamentos',
+                        details: ['Farmacia', 'Medicamentos recetados', 'De venta libre', 'Vitaminas'],
+                    },
+                    {
+                        name: 'Odontólogo',
+                        details: ['Consultas', 'Tratamientos odontológicos'],
+                    },
+                    {
+                        name: 'Obra social / prepaga',
+                        details: ['Cuota mensual', 'Cobertura de salud'],
+                    },
+                ]
+            },
+            {
+                name: 'Movilidad',
+                concepts: [
+                    {
+                        name: 'Nafta',
+                        details: ['Shell', 'YPF', 'Combustible para el Renault'],
+                    },
+                    {
+                        name: 'Peajes',
+                        details: ['Autopista', 'Peajes de viajes'],
+                    },
+                    {
+                        name: 'Seguro auto',
+                        details: ['Cuota mensual', 'Sancor Seguros'],
+                    },
+                    {
+                        name: 'Mantenimiento auto',
+                        details: ['Service periódico', 'Repuestos', 'Lavado', 'Neumáticos'],
+                    },
+                    {
+                        name: 'Uber / remis',
+                        details: ['Transporte alternativo'],
+                    },
+                ]
+            },
+            {
+                name: 'Formación',
+                concepts: [
+                    {
+                        name: 'Matrícula / arancel',
+                        details: ['UNC', 'Carrera Ciencias de la Computación', 'Aranceles universitarios'],
+                    },
+                    {
+                        name: 'Materiales de estudio',
+                        details: ['Fotocopias', 'Impresiones', 'Apuntes', 'Cuadernos'],
+                    },
+                    {
+                        name: 'Librería',
+                        details: ['Material académico', 'Libros de estudio'],
+                    },
+                    {
+                        name: 'Cursos / certificaciones',
+                        details: ['Udemy', 'Coursera', 'Posgrados', 'Especializaciones'],
+                    },
+                ]
+            },
         ]
     },
+
+    // ========================================================================
+    // TRABAJAR — Gastos necesarios para el ejercicio profesional
+    // ========================================================================
     {
-        name: 'PROFESIONAL',
+        name: 'TRABAJAR',
         categories: [
             {
-                name: 'Infraestructura y Difusión',
+                name: 'Obligaciones fiscales',
                 concepts: [
-                    { name: 'Digital', details: ['Hetzner', 'Google Workspace', 'Porkbun'] },
-                    { name: 'Marketing', details: ['Red de Salud Mental Argentina', 'Google Ads', 'Meta'] },
+                    {
+                        name: 'Monotributo Mauro',
+                        details: ['Cuota mensual', 'Profesional autónomo'],
+                    },
+                    {
+                        name: 'Monotributo Agos',
+                        details: ['Cuota mensual', 'Profesional autónoma'],
+                    },
+                    {
+                        name: 'Honorarios contador',
+                        details: ['Asesoría fiscal', 'Liquidación monotributos'],
+                    },
                 ]
             },
             {
-                name: 'Cargas Profesionales',
+                name: 'Seguros y servicios profesionales',
                 concepts: [
-                    { name: 'Cargas profesionales', details: ['Monotributo', 'Caja de Psicólogos', 'Mala Praxis'] },
+                    {
+                        name: 'Mala Praxis Mauro',
+                        details: ['Seguro de responsabilidad profesional', 'Cuota mensual'],
+                    },
+                    {
+                        name: 'Mala Praxis Agos',
+                        details: ['Seguro de responsabilidad profesional', 'Cuota mensual'],
+                    },
+                    {
+                        name: 'RESMA',
+                        details: ['Servicio profesional', 'Derivación de pacientes', 'Formaciones clínicas'],
+                    },
                 ]
             },
             {
-                name: 'Espacio Físico',
+                name: 'Infraestructura digital',
                 concepts: [
-                    { name: 'Alquiler Consultorio', details: ['(Nombre propietario/inmobiliaria)'] },
+                    {
+                        name: 'Google Workspace',
+                        details: ['Suite Google', 'Consultorio profesional', 'Gmail, Drive, Docs'],
+                    },
+                    {
+                        name: 'Dominio Lumen',
+                        details: ['lumensaludmental.com', 'Renovación anual'],
+                    },
+                    {
+                        name: 'Google Cloud / Hetzner',
+                        details: ['Infraestructura servidor', 'Self-hosting', 'n8n, PostgreSQL'],
+                    },
                 ]
-            }
+            },
+            {
+                name: 'Equipamiento profesional',
+                concepts: [
+                    {
+                        name: 'Insumos consultorio',
+                        details: ['Material clínico', 'Papelería profesional', 'Elementos de sesión'],
+                    },
+                    {
+                        name: 'Tecnología laboral',
+                        details: ['PC', 'Pantallas', 'Periféricos', 'Dispositivos de trabajo'],
+                    },
+                    {
+                        name: 'Librería laboral',
+                        details: ['Libros técnicos', 'DSM', 'CIE', 'Manuales diagnósticos'],
+                    },
+                ]
+            },
         ]
     },
+
+    // ========================================================================
+    // DEBER — Compromisos financieros ya contraídos
+    // ========================================================================
     {
-        name: 'BRASIL',
+        name: 'DEBER',
         categories: [
             {
-                name: 'Gestión de Inmueble',
+                name: 'Préstamos',
                 concepts: [
-                    { name: 'Tributario', details: ['IPTU', 'Tasas Ambientales'] },
-                    { name: 'Operativo', details: ['Condominio', 'Mantenimiento', 'CELESC'] },
+                    {
+                        name: 'Préstamo BNA',
+                        details: ['Banco Nación Argentina', 'Cuota fija mensual'],
+                    },
+                    {
+                        name: 'Préstamo ANSES',
+                        details: ['ANSES CRECER', 'Crédito bancario'],
+                    },
+                    {
+                        name: 'Préstamo personal',
+                        details: ['PF 2261551771', 'PF 1753009581', 'Identificados por número'],
+                    },
+                    {
+                        name: 'Préstamo BBVA',
+                        details: ['Cuota mensual', 'Estado pendiente de confirmar'],
+                    },
                 ]
-            }
+            },
+            {
+                name: 'Deudas',
+                concepts: [
+                    {
+                        name: 'Deuda AGIP',
+                        details: ['CABA', 'Planes de pago', 'Obligaciones impositivas'],
+                    },
+                    {
+                        name: 'Multas / infracciones',
+                        details: ['Tránsito', 'Resolución administrativa'],
+                    },
+                ]
+            },
         ]
-    }
+    },
+
+    // ========================================================================
+    // DISFRUTAR — Gastos discrecionales
+    // ========================================================================
+    {
+        name: 'DISFRUTAR',
+        categories: [
+            {
+                name: 'Ocio y salidas',
+                concepts: [
+                    {
+                        name: 'Empanadas',
+                        details: ['Salidas', 'Pedidos'],
+                    },
+                    {
+                        name: 'Hamburguesas',
+                        details: ['Comer afuera', 'Salidas'],
+                    },
+                    {
+                        name: 'Cervezas / gaseosas',
+                        details: ['Bebidas para salidas', 'Reuniones en casa'],
+                    },
+                    {
+                        name: 'Asado',
+                        details: ['Familiares', 'Con amigos', 'Carne, bebidas, carbón'],
+                    },
+                    {
+                        name: 'Heladería / café',
+                        details: ['Salidas', 'Confitería'],
+                    },
+                    {
+                        name: 'Restaurantes / otros',
+                        details: ['Salidas gastronómicas', 'Entretenimiento'],
+                    },
+                ]
+            },
+            {
+                name: 'Compras personales',
+                concepts: [
+                    {
+                        name: 'Regalos',
+                        details: ['Familiares', 'Amigos', 'Conocidos'],
+                    },
+                    {
+                        name: 'Peluquería / estética',
+                        details: ['Barbería', 'Cuidado personal estético'],
+                    },
+                    {
+                        name: 'Ropa y calzado',
+                        details: ['Indumentaria personal'],
+                    },
+                    {
+                        name: 'Librería personal',
+                        details: ['Sin propósito académico', 'Cuadernos', 'Stickers', 'Papelería'],
+                    },
+                    {
+                        name: 'Consumibles varios',
+                        details: ['Datos móviles', 'Artículos de bazar', 'Misceláneos'],
+                    },
+                ]
+            },
+            {
+                name: 'Suscripciones',
+                concepts: [
+                    {
+                        name: 'Spotify',
+                        details: ['Música streaming', 'Cuota mensual'],
+                    },
+                    {
+                        name: 'Streaming',
+                        details: ['Netflix', 'Plataformas de contenido', 'Audiovisual'],
+                    },
+                    {
+                        name: 'Otras apps personales',
+                        details: ['Bienestar', 'Productividad', 'Entretenimiento'],
+                    },
+                ]
+            },
+        ]
+    },
 ];
 
-// Helper functions
-export const getUnitConfig = (unitName: string) => CLASSIFICATION_MAP.find(u => u.name === unitName);
-export const getCategoriesForUnit = (unitName: string) => getUnitConfig(unitName)?.categories || [];
-export const getConceptsForCategory = (unitName: string, categoryName: string) => {
-    const unit = getUnitConfig(unitName);
-    const category = unit?.categories.find(c => c.name === categoryName);
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+export const getMacroConfig = (macroName: string): MacroConfig | undefined => {
+    return CLASSIFICATION_MAP.find((m) => m.name === macroName);
+};
+
+export const getCategoriesForMacro = (macroName: string): CategoryOption[] => {
+    return getMacroConfig(macroName)?.categories || [];
+};
+
+export const getConceptsForCategory = (macroName: string, categoryName: string): ConceptOption[] => {
+    const macro = getMacroConfig(macroName);
+    if (!macro) return [];
+    const category = macro.categories.find((c) => c.name === categoryName);
     return category?.concepts || [];
 };
-export const getDetailsForConcept = (unitName: string, categoryName: string, conceptName: string) => {
-    const concepts = getConceptsForCategory(unitName, categoryName);
-    const concept = concepts.find(c => c.name === conceptName);
+
+export const getDetailsForConcept = (
+    macroName: string,
+    categoryName: string,
+    conceptName: string
+): string[] => {
+    const concepts = getConceptsForCategory(macroName, categoryName);
+    const concept = concepts.find((c) => c.name === conceptName);
     return concept?.details || [];
 };
+
+// Get all macros
+export const getMacros = (): string[] => {
+    return CLASSIFICATION_MAP.map((m) => m.name);
+};
+
+// Get all categories across all macros
+export const getAllCategories = (): string[] => {
+    return Array.from(
+        new Set(CLASSIFICATION_MAP.flatMap((m) => m.categories.map((c) => c.name)))
+    );
+};
+
+// Get all concepts across all macros
+export const getAllConcepts = (): string[] => {
+    return Array.from(
+        new Set(
+            CLASSIFICATION_MAP.flatMap((m) =>
+                m.categories.flatMap((c) => c.concepts.map((p) => p.name))
+            )
+        )
+    );
+};
+
+export default CLASSIFICATION_MAP;

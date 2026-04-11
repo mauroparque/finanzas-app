@@ -1,147 +1,143 @@
-import { Timestamp } from 'firebase/firestore';
-
 // UI Types
-export type Screen = 'dashboard' | 'cards' | 'services';
+export type Screen = 'inicio' | 'carga' | 'pasivos' | 'tarjetas' | 'horizonte' | 'analisis';
 
-export enum ServiceStatus {
-    PENDING = 'PENDING',
-    RESERVED = 'RESERVED',
-    PAID = 'PAID'
-}
+// Enums and Constants
+export type Macro = 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
+export type Unit = 'HOGAR' | 'BRASIL' | 'PROFESIONAL';
+export type Currency = 'ARS' | 'USD' | 'USDT';
+export type PaymentMethod = 'Efectivo' | 'Mercado Pago' | 'Personal Pay' | 'BNA' | 'BBVA Visa' | 'BNA Mastercard' | 'BNA Visa' | 'Fiwind' | 'Brubank' | 'Débito BNA';
+export type QuestionMark = 'Mauro' | 'Agos' | 'Compartido';
+export type InstallmentType = 'prestamo' | 'cuota_bien' | 'deuda';
+export type InstallmentStatus = 'activo' | 'cancelado' | 'pausado';
+export type CuotaStatus = 'pendiente' | 'pagado' | 'vencido';
+export type AlertType = 'vencimiento_servicio' | 'vencimiento_cuota' | 'saldo_bajo';
+export type Source = 'app' | 'n8n' | 'migration';
 
-// Domain Models
+// Core Domain Models
 
-// Core Transaction Model
+// Transaction — Gasto individual
 export interface Transaction {
-    id: string;
-    type: 'income' | 'expense';
-    amount: number;
-    currency: 'ARS' | 'USD' | 'USDT' | 'BRL';
+    id: number | string;
 
-    // Jerarquía de clasificación
-    unit: 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
-    category: string;  // Ej: "Vivienda y Vida Diaria"
-    concept: string;   // Ej: "Abastecimiento"
-    detail: string;    // Ej: "Supermercado Coto"
+    // Clasificación (Macro → Categoría → Concepto → Detalle)
+    macro: Macro;
+    categoria: string;
+    concepto: string;
+    detalle: string;  // texto libre
 
-    // Línea de tiempo (Timeline)
-    date_operation: Timestamp;  // La fecha del ticket/comprobante (REPORTES)
-    date_validation: Timestamp; // Cuando confirmaste que el dato es correcto
+    // Atributos de gasto
+    monto: number;
+    moneda: Currency;
 
-    // Relaciones y Métodos
-    account: string;
-    paymentMethod?: string;
-    isRecurring: boolean;
-    recurringConfig?: RecurringConfig;
+    // Contexto
+    unidad: Unit;
+    quien: QuestionMark;
+    medio_pago: PaymentMethod;
 
-    // Auditoría
-    source: 'manual' | 'mercadopago' | 'telegram' | 'n8n';
-    externalId?: string;
-    createdAt: Timestamp; // Fecha de carga automática
-    updatedAt: Timestamp;
+    // Cuota
+    es_cuota?: boolean;
+    cuota_id?: number | string;
+    numero_cuota?: number;
+
+    // Timeline
+    fecha_operacion: Date | string;  // ISO string o Date
+
+    // Metadata
+    validado?: boolean;
+    editado_por_ia?: boolean;
+    source: Source;
+    fecha_carga: Date | string;
+    notas?: string;
 }
 
-// Account Model (Bank accounts, wallets, MP accounts)
+// InstallmentPlan — Plan de cuotas o préstamo
+export interface InstallmentPlan {
+    id: number | string;
+    nombre: string;
+    tipo: InstallmentType;
+
+    macro?: Macro;
+    categoria?: string;
+    concepto?: string;
+    unidad: Unit;
+
+    monto_total?: number;  // NULL para préstamos existentes
+    total_cuotas: number;
+    monto_cuota: number;
+    moneda: Currency;
+
+    medio_pago: PaymentMethod;
+    fecha_inicio: Date | string;
+    fecha_fin_est: Date | string;
+
+    estado: InstallmentStatus;
+    notas?: string;
+    creado_en?: Date | string;
+}
+
+// Cuota — Cuota individual generada automáticamente
+export interface Cuota {
+    id: number | string;
+    plan_id: number | string;
+    numero: number;
+
+    fecha_vencimiento: Date | string;
+    monto: number;
+    estado: CuotaStatus;
+
+    transaction_id?: number | string;  // FK cuando está pagada
+    pagado_en?: Date | string;
+}
+
+// MonthlyIncome — Ingreso mensual
+export interface MonthlyIncome {
+    id: number | string;
+    mes: Date | string;  // primer día del mes (YYYY-MM-01)
+    monto: number;
+    moneda: Currency;
+    notas?: string;
+}
+
+// Alert — Alerta generada automáticamente
+export interface Alert {
+    id: number | string;
+    tipo: AlertType;
+    referencia_id?: number | string;  // ID del servicio o cuota relacionado
+    descripcion: string;
+    fecha_alerta: Date | string;
+    monto?: number;
+    leida: boolean;
+    creada_en?: Date | string;
+}
+
+// Legacy types (mantener para compatibilidad temporal)
 export interface Account {
     id: string;
-    name: string; // Ej: "Mercadopago Mauro", "Mercado Pago Agos", "Efectivo ARS"
-
-    type: 'bank' | 'virtual' | 'cash'; // Solo 3 opciones claras
+    name: string;
+    type: 'bank' | 'virtual' | 'cash';
     isActive: boolean;
-
-    currency: 'ARS' | 'USD' | 'USDT' | 'BRL';
+    currency: Currency;
     balance: number;
     initial_balance: number;
-
     color: string;
     icon: string;
-
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
 }
 
-// Service / Recurring Transaction Model
 export interface Service {
-    id: string; // ID autogenerado
-    name: string; // Ej: "EPEC (Luz)", "Netflix", "Alquiler Brasil"
-
-    // Datos monetarios
-    amount: number; // Monto estimado o último monto pagado
-    currency: 'ARS' | 'USD' | 'USDT' | 'BRL';
-
-    // Clasificación (Espejo de Transactions para automatización total)
-    unit: 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
-    category: string; // Ej: "Vivienda y Vida Diaria"
-    concept: string;  // Ej: "Servicios e Impuestos"
-    detail: string;   // Ej: "Internet Fibra" o "Netflix"
-
-    // Lógica de Vencimiento
-    dueDate: number; // Día del mes (1 al 31) en que vence habitualmente
-    status: ServiceStatus;
-
-    // Automatización y Control
-    account_default?: string; // ID de la cuenta de donde suele debitarse (opcional)
-    isAutoPay: boolean; // ¿Es débito automático o manual?
-
-    // Historial y Variación
-    last_amount?: number; // Para comparar con el mes anterior
-    variation?: 'up' | 'down' | 'stable'; // Calculado automáticamente
-
-    // Metadatos
-    description?: string;
-    isActive: boolean; // Para servicios que das de baja
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-}
-
-// ServiceItem legacy alias for compatibility until all components are updated
-export type ServiceItem = Service;
-
-// Budget Model
-export interface Budget {
     id: string;
-
-    // El presupuesto puede ser por Categoría o por Concepto
-    target_type: 'category' | 'concept';
-    target_name: string; // El nombre de la categoría o concepto (ej: "Salud")
-
-    // Límites
-    limit: number;
-    currency: 'ARS' | 'USD' | 'BRL'; // Presupuestos en la moneda que prefieras
-
-    // Control de Unidad (Opcional: puedes tener un presupuesto solo para BRASIL)
-    unit?: 'HOGAR' | 'PROFESIONAL' | 'BRASIL' | 'GLOBAL';
-
-    // Estado actual (Calculado por n8n o Firebase Functions)
-    spent: number;
-    alertThreshold: number; // % (ej: 80) para que n8n te mande un Telegram de aviso
-
-    period: 'monthly'; // Por ahora mensual es lo más sólido
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-}
-
-// Temporary UI legacy interfaces if needed
-export interface CreditCardItem {
-    id: string;
-    description: string;
-    currentInstallment: number;
-    totalInstallments: number;
-    amount: number;
-    category: string;
-}
-
-// Recurring Config
-export interface RecurringConfig {
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    dayOfMonth?: number;
-    nextOccurrence: Timestamp;
-    endDate?: Timestamp;
-}
-
-export interface BudgetCategory {
     name: string;
-    limit: number;
-    spent: number;
-    icon: string;
+    amount: number;
+    currency: Currency;
+    unit: Unit;
+    category: string;
+    concept: string;
+    detail: string;
+    dueDate: number;
+    status: 'PENDING' | 'RESERVED' | 'PAID';
+    account_default?: string;
+    isAutoPay: boolean;
+    last_amount?: number;
+    variation?: 'up' | 'down' | 'stable';
+    description?: string;
+    isActive: boolean;
 }
