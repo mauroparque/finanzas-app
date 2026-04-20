@@ -10,7 +10,7 @@ const Dashboard: React.FC = () => {
   const { budgets, loading: loadingBudgets } = useBudgets();
   const { services, loading: loadingServices } = useServices();
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const totalBalance = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
 
   const upcomingDeadlines = services
     .filter(s => s.status !== 'PAID')
@@ -65,9 +65,9 @@ const Dashboard: React.FC = () => {
             {accounts.slice(0, 2).map(acc => (
               <div key={acc.id} className="flex-1 bg-black/20 backdrop-blur-md rounded-2xl p-3 border border-white/5 hover:bg-black/30 transition-colors">
                 <div className="flex items-center gap-1.5 mb-1 text-indigo-200">
-                  <span className="text-[10px] font-bold uppercase opacity-80">{acc.name}</span>
+                  <span className="text-[10px] font-bold uppercase opacity-80">{acc.nombre}</span>
                 </div>
-                <p className="text-base font-bold text-white tracking-tight">${acc.balance.toLocaleString()}</p>
+                <p className="text-base font-bold text-white tracking-tight">${acc.saldo.toLocaleString()}</p>
               </div>
             ))}
             {accounts.length === 0 && (

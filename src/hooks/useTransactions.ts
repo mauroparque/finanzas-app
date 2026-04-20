@@ -38,7 +38,7 @@ export const useTransactions = (filters?: {
         const lastDayDate = new Date(year, filters.month.getMonth() + 1, 0);
         const lastDay = `${year}-${month}-${lastDayDate.getDate().toString().padStart(2, '0')}T23:59:59Z`;
 
-        params.fecha_operacion = `gte.${firstDay},lte.${lastDay}`;
+        params['and'] = `(fecha_operacion.gte.${firstDay},fecha_operacion.lte.${lastDay})`;
       }
 
       const data = await apiGet<Movimiento>('/movimientos', params);

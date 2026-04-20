@@ -15,8 +15,8 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (activeScreen) {
       case 'dashboard': return <Dashboard />;
-      case 'cards': return <CardsView />;
-      case 'services': return <ServicesView onBack={() => setActiveScreen('dashboard')} />;
+      case 'tarjetas': return <CardsView />;
+      case 'servicios': return <ServicesView onBack={() => setActiveScreen('dashboard')} />;
       default: return <Dashboard />;
     }
   };
@@ -62,14 +62,14 @@ const App: React.FC = () => {
           label="Inicio"
         />
         <NavItem
-          active={activeScreen === 'cards'}
-          onClick={() => setActiveScreen('cards')}
+          active={activeScreen === 'tarjetas'}
+          onClick={() => setActiveScreen('tarjetas')}
           icon={<CreditCard size={22} />}
           label="Tarjetas"
         />
         <NavItem
-          active={activeScreen === 'services'}
-          onClick={() => setActiveScreen('services')}
+          active={activeScreen === 'servicios'}
+          onClick={() => setActiveScreen('servicios')}
           icon={<ClipboardCheck size={22} />}
           label="Servicios"
         />

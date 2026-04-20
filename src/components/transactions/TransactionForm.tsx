@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useMediosPago } from '../../hooks/useMediosPago';
 import { Check, Loader2 } from 'lucide-react';
-import { Timestamp } from 'firebase/firestore';
 import {
     CLASSIFICATION_MAP,
     getCategoriesForUnit,
@@ -59,7 +58,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
         try {
             await addTransaction({
                 monto: parseFloat(formData.amount),
-                tipo: formData.type,
+                tipo: formData.type === 'expense' ? 'gasto' : 'ingreso',
                 moneda: formData.currency,
                 unidad: formData.unit,
                 categoria: formData.category,
@@ -202,8 +201,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                         <button
                             key={acc.id}
                             type="button"
-                            onClick={() => setFormData({ ...formData, account: String(acc.id) })}
-                            className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all truncate ${formData.account === String(acc.id) ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            onClick={() => setFormData({ ...formData, account: acc.nombre })}
+                            className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all truncate ${formData.account === acc.nombre ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
                         >
                             {acc.nombre}
                         </button>
