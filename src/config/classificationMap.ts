@@ -432,6 +432,11 @@ export const getCategoriesForMacro = (macroName: string): CategoryOption[] => {
     return getMacroConfig(macroName)?.categories || [];
 };
 
+// Backward-compatible alias used by form components that still reference "unit".
+export const getCategoriesForUnit = (unitOrMacroName: string): CategoryOption[] => {
+    return getCategoriesForMacro(unitOrMacroName);
+};
+
 export const getConceptsForCategory = (macroName: string, categoryName: string): ConceptOption[] => {
     const macro = getMacroConfig(macroName);
     if (!macro) return [];
