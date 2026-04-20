@@ -3,7 +3,9 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-20  
-**Estado general:** En progreso — Phase 1 por iniciar
+**Estado general:** En progreso — Phase 1 parcialmente completada en `feat/phase1-foundation`
+
+> **Worktree activo:** `feat/phase1-foundation` (`.worktrees/feat-phase1-foundation`, HEAD `e80beef`) contiene trabajo pendiente de merge a `main`. Los ítems marcados `[x]` en Phase 1 y Phase 2 viven en esa rama, no en `main`.
 
 ---
 
@@ -17,9 +19,9 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 ## Estado Actual
 
-Phase 0 cerrada. La fundación de datos y arquitectura está alineada con la spec v1.0: tipos de dominio reescritos, taxonomía Macro correcta, Zustand instalado, cliente Hono/fetch creado, migration SQL lista para ejecutar en VPS. Sin embargo, las **capas de UI y hooks aún no migraron**: `App.tsx` todavía usa la estética dark/neon y el screen routing antiguo; `useTransactions.ts` sigue importando Firebase; `Dashboard.tsx`, `CardsView.tsx` y `TransactionForm.tsx` no consumen el nuevo store ni el cliente Hono. Phase 1 es donde arranca el trabajo visible.
+Phase 0 cerrada. La fundación de datos y arquitectura está alineada con la spec v1.0: tipos de dominio reescritos, taxonomía Macro correcta, cliente PostgREST creado, migration SQL lista para ejecutar en VPS. En la rama `feat/phase1-foundation` (worktree activo) ya se completaron los primeros pasos de Phase 1: `useTransactions.ts` migrado a PostgREST, `useAccounts.ts` reemplazado por `useMediosPago.ts`, `TransactionForm.tsx` actualizado al nuevo esquema, y Tailwind v3 con tokens Editorial Orgánico instalados y configurados.
 
-Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` eliminado del raíz (movido a `docs/spec/`), directorio `docs/spec/` nuevo.
+Lo que **no** ha migrado todavía (pendiente en Phase 1/2): `App.tsx` sigue con estética dark/neon y screen routing antiguo; `Dashboard.tsx` y `CardsView.tsx` no usan el nuevo diseño; la migration `001_finanzas_rearchitecture.sql` aún no se ejecutó en la VPS. El worktree `feat/phase1-foundation` debe mergearse a `main` para que estos avances sean la base de trabajo.
 
 ---
 
@@ -30,14 +32,13 @@ Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` e
 **Objetivo:** Alinear el modelo de datos, la taxonomía y la configuración de infraestructura con la spec v1.0 antes de tocar UI.
 
 **Entregables completados:**
-- `src/types/index.ts` reescrito con `Macro`, `Unit`, `Currency`, `QuestionMark`, `InstallmentPlan`, `Cuota`, `MonthlyIncome`, `Alert`
-- `src/config/classificationMap.ts` migrado de Unit→Category a Macro→Category→Concept (VIVIR 7 cats, TRABAJAR 4, DEBER 2, DISFRUTAR 3)
-- `src/store/transactionStore.ts` — store Zustand central (transactions, plans, cuotas, income, alerts + filtros)
-- `src/store/uiStore.ts` — store Zustand de UI (navegación, modales, selectors de unidad/mes)
-- `src/config/api.ts` — cliente fetch genérico (Hono/PostgREST-compatible: apiGet, apiPost, apiPatch, apiPut, apiDelete)
-- `supabase/migrations/002_spec_v1_migration.sql` — migration lista (requiere ejecución manual en VPS)
 
-**Pendiente de Phase 0 sin commitear:** mover spec a `docs/spec/`, actualizar `CLAUDE.md`.
+- `src/types/index.ts` reescrito con `Macro`, `Unit`, `Currency`, `QuestionMark`, `InstallmentPlan`, `Cuota`, `MonthlyIncome`, `Alert` — tipos en snake_case alineados con esquema PostgreSQL
+- `src/config/classificationMap.ts` migrado de Unit→Category a Macro→Category→Concept (VIVIR 7 cats, TRABAJAR 4, DEBER 2, DISFRUTAR 3)
+- `src/config/api.ts` — cliente PostgREST con `apiGet`, `apiPost`, `apiPatch`, `apiDelete` (header `Prefer: return=representation` en writes)
+- `supabase/migrations/001_finanzas_rearchitecture.sql` — migration lista (173 líneas; requiere ejecución manual en VPS)
+
+**Nota:** El proyecto **no usa Zustand**. Los stores `transactionStore.ts` / `uiStore.ts` que el commit Phase 0 original registró fueron eliminados en `feat/phase1-foundation`. La arquitectura real usa hooks directos sobre `api.ts`, sin capa de store intermedia.
 
 ---
 
@@ -47,15 +48,20 @@ Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` e
 
 **Regla inamovible:** La carga debe completarse en 3 taps o menos desde el FAB.
 
-**Entregables esperados:**
+**Entregables completados** (en `feat/phase1-foundation`, pendiente merge):
 
-- [ ] Migrar `useTransactions.ts` de Firebase a `api.ts` (POST/GET `/movimientos`)
-- [ ] Migrar `useAccounts.ts` a `useMediosPago.ts` (GET `/medios_pago`)
-- [ ] Conectar `TransactionForm.tsx` al store Zustand + hooks nuevos
+- [x] Migrar `useTransactions.ts` de Firebase a `api.ts` (POST/GET `/movimientos`) — `e80beef`
+- [x] Crear `useMediosPago.ts` reemplazando `useAccounts.ts` (GET `/medios_pago`, 70 líneas) — `e80beef`
+- [x] Actualizar `TransactionForm.tsx` al nuevo esquema PostgREST — `e80beef`
+- [x] Actualizar `Dashboard.tsx` para usar `useMediosPago` — `e80beef`
+
+**Entregables pendientes:**
+
+- [ ] Mergear `feat/phase1-foundation` a `main`
 - [ ] Implementar lógica "último usado" para defaults de Macro/Categoría/Concepto/Medio de pago
 - [ ] Motor de sugerencia IA: dado monto + texto libre, sugerir clasificación (spec §9)
-- [ ] Ejecutar `002_spec_v1_migration.sql` en VPS y verificar endpoints
-- [ ] Variable de entorno `VITE_API_URL` apuntando al backend Hono en VPS
+- [ ] Ejecutar `001_finanzas_rearchitecture.sql` en VPS y verificar endpoints
+- [ ] Variable de entorno `VITE_API_URL` apuntando al backend real en VPS
 
 **Dependencia:** migration en VPS debe ejecutarse antes de poder probar el flujo end-to-end.
 
@@ -65,7 +71,13 @@ Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` e
 
 **Objetivo:** Reemplazar la estética dark/neon por el tema "Editorial Orgánico" y alinear la navegación con la spec.
 
-**Entregables esperados:**
+**Entregables completados** (en `feat/phase1-foundation`, pendiente merge):
+
+- [x] Tailwind v3 instalado (`tailwind.config.js` con paleta terracotta/sage/navy, `postcss.config.js`) — `4d1f38d`
+- [x] `src/index.css` con directivas Tailwind + tema base stone-50 — `4d1f38d`
+- [x] `index.html` limpio: sin CDN Tailwind, con PWA meta tags — `4d1f38d`
+
+**Entregables pendientes:**
 
 - [ ] `App.tsx`: quitar fondo dark + blobs animados; aplicar `bg-stone-50`; actualizar FAB a terracotta
 - [ ] `App.tsx`: actualizar `Screen` type a los screens de la spec (`inicio`, `carga`, `pasivos`, `tarjetas`, `horizonte`, `analisis`) — actualmente hay desalineación con el tipo en `types/index.ts`
@@ -109,24 +121,23 @@ Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` e
 
 - [x] Tipos de dominio definidos (`Transaction`, `Macro`, `Unit`, `Currency`, `QuestionMark`)
 - [x] Taxonomía completa en `classificationMap.ts`
-- [x] Store Zustand (`transactionStore.ts`)
-- [x] Cliente API (`api.ts`)
-- [ ] Hook `useTransactions.ts` migrado a Hono (actualmente usa Firebase)
-- [ ] `TransactionForm.tsx` conectado al store y hook nuevo
+- [x] Cliente API (`api.ts`) — PostgREST con `apiGet/apiPost/apiPatch/apiDelete`
+- [x] Hook `useTransactions.ts` migrado a PostgREST `api.ts` — `feat/phase1-foundation` `e80beef`
+- [x] `TransactionForm.tsx` actualizado al nuevo esquema PostgREST — `feat/phase1-foundation` `e80beef`
 - [ ] Regla 3 taps implementada (defaults al último usado)
 - [ ] Motor sugerencia IA
 
 ### Tarjetas y Préstamos
 
 - [x] Tipos definidos (`InstallmentPlan`, `Cuota`, `InstallmentType`, `CuotaStatus`)
-- [x] Migration SQL para tablas `installment_plans` y `cuotas` (002)
+- [x] Migration SQL para tablas `cuotas_tarjeta` y `prestamos` (001)
 - [ ] `useCuotasTarjeta.ts` (hook nuevo)
 - [ ] `usePrestamos.ts` (hook nuevo)
 - [ ] `CardsView.tsx` conectado a datos reales
 
 ### Servicios (checklist mensual)
 
-- [ ] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration 001)
+- [ ] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration `001_finanzas_rearchitecture.sql`)
 - [ ] `useServicios.ts` migrado a Hono
 - [ ] `ServicesView.tsx` mostrando servicios del mes desde DB
 - [ ] Flujo PENDING → PAGADO (actualiza `movimientos_previstos_mes` + crea `movimiento`)
@@ -154,41 +165,41 @@ Hay cambios sin commitear: `CLAUDE.md` modificado, `docs/finanzas_app_spec.md` e
 
 ## Deuda Técnica Conocida
 
-| Item | Severidad | Descripción |
-|------|-----------|-------------|
-| `useTransactions.ts` importa Firebase | Alta | Hook principal sigue apuntando a Firestore. Bloquea cualquier funcionalidad real con el nuevo backend. |
-| `App.tsx` desalineado con spec | Media | Screen type en `types/index.ts` define `'inicio'|'carga'|'pasivos'|'tarjetas'|'horizonte'|'analisis'` pero `App.tsx` usa `'dashboard'|'cards'|'services'`. |
-| `config/firebase.ts` sin eliminar | Baja | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión. |
-| Estética dark/neon en `App.tsx` | Media | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". |
-| Migration 001 y 002 sin ejecutar en VPS | Alta | Las tablas nuevas (`servicios_definicion`, `installment_plans`, `cuotas`, etc.) no existen en producción todavía. |
-| `useAccounts.ts` y `useBudgets.ts` no migrados | Media | Hooks secundarios todavía sin conectar al nuevo cliente. |
+| Item                                                            | Severidad | Descripción                                                                                                                                  |
+| --------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------- | ---------- | ----------- | --------------------------------------- | ------- | ------------ |
+| `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `'inicio'                                                                                             | 'carga' | 'pasivos' | 'tarjetas' | 'horizonte' | 'analisis'`pero`App.tsx`usa`'dashboard' | 'cards' | 'services'`. |
+| `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                            |
+| Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.               |
+| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS | Alta      | Las tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) no existen en producción todavía. Bloquea todo el flujo E2E. |
+| `useBudgets.ts` no migrado                                      | Baja      | Hook secundario todavía sin conectar al nuevo cliente PostgREST.                                                                             |
+| Worktree `feat/phase1-foundation` sin mergear                   | Alta      | Tres commits de trabajo real no están en `main`. Riesgo de divergencia si se sigue trabajando en `main`.                                     |
 
 ---
 
 ## Próximos Pasos (accionables)
 
-1. **Commitear cambios pendientes de Phase 0**: `CLAUDE.md` y reorganización de `docs/spec/`.
-2. **Ejecutar migrations en VPS**: correr `001_finanzas_rearchitecture.sql` y `002_spec_v1_migration.sql` via CloudBeaver/SSH. Verificar que los endpoints respondan.
-3. **Migrar `useTransactions.ts`**: reemplazar imports de Firebase por llamadas a `api.ts`. Es el desbloqueador principal de Phase 1.
-4. **Migrar `TransactionForm.tsx`**: conectar al store Zustand + hook migrado; implementar defaults por último usado.
-5. **Alinear `App.tsx`**: unificar el tipo `Screen` y aplicar el tema Editorial Orgánico como paso previo al rediseño completo de vistas.
+1. **Mergear `feat/phase1-foundation` a `main`**: tres commits de trabajo real (Tailwind, PostgREST client, hooks migrados) están listos. Hacerlo antes de continuar cualquier desarrollo.
+2. **Ejecutar `001_finanzas_rearchitecture.sql` en VPS**: via CloudBeaver o SSH en Coolify. Verificar que los endpoints de PostgREST respondan (`/movimientos`, `/medios_pago`, etc.).
+3. **Configurar `VITE_API_URL`** en `.env.local` apuntando al backend real.
+4. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta (Tailwind ya está disponible tras el merge).
+5. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Es el desbloqueador de la regla 3 taps para Agos.
 
 ---
 
 ## Riesgos y Bloqueos
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Migrations sin ejecutar en VPS bloquean todo el flujo E2E | Alta | Alto | Ejecutar como primer paso de Phase 1 antes de escribir código |
-| `VITE_API_URL` no configurada en entorno de desarrollo | Media | Alto | Verificar `.env.local` antes de arrancar Phase 1 |
-| Motor IA (spec §9) requiere diseño adicional | Media | Medio | Definir con Mauro el approach (LLM externo, regex local, o híbrido) antes de implementar |
-| Flujo "3 taps" para Agos requiere UX testing real | Baja | Alto | Validar con Agos en dispositivo real antes de dar Phase 1 por cerrada |
+| Riesgo                                                                            | Probabilidad | Impacto | Mitigación                                                                               |
+| --------------------------------------------------------------------------------- | ------------ | ------- | ---------------------------------------------------------------------------------------- |
+| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS bloquea flujo E2E | Alta         | Alto    | Ejecutar como primer paso tras mergear el worktree                                       |
+| `VITE_API_URL` no configurada en entorno de desarrollo                            | Media        | Alto    | Verificar `.env.local` antes de arrancar Phase 1                                         |
+| Motor IA (spec §9) requiere diseño adicional                                      | Media        | Medio   | Definir con Mauro el approach (LLM externo, regex local, o híbrido) antes de implementar |
+| Flujo "3 taps" para Agos requiere UX testing real                                 | Baja         | Alto    | Validar con Agos en dispositivo real antes de dar Phase 1 por cerrada                    |
 
 ---
 
 ## Notas del PM
 
-- **Stack real confirmado por código:** Frontend usa React 19 + Vite + Zustand. Backend es Hono (cliente genérico fetch en `api.ts`) — no PostgREST puro. `CLAUDE.md` menciona PostgREST en algunos lugares pero el commit Phase 0 y el código dicen Hono. Pendiente de aclarar si Hono corre delante de PostgREST o lo reemplaza completamente.
+- **Stack real confirmado por código (worktree):** Frontend usa React 19 + Vite + hooks directos (sin Zustand). El cliente `api.ts` apunta a PostgREST en VPS. `CLAUDE.md` menciona Hono como capa intermedia pero el código real en `feat/phase1-foundation` usa PostgREST directo. Confirmar con Mauro si Hono está previsto como proxy o si PostgREST es el backend definitivo.
 - **Fuera de alcance v1:** ingresos automáticos, inversiones, reportes exportables, multi-hogar, ingresos del inmueble Brasil.
 - **Monedas soportadas:** ARS, USD, USDT. BRL referenciado en spec para unidad Brasil pero no está en el tipo `Currency` — punto a decidir.
 - **Spec v1.0** vive en `docs/spec/finanzas_app_spec.md`. El archivo `docs/spec/finanzas_app_contexto_adicional.md` resuelve divergencias entre spec y el prototipo UI (`cauce-app-v2.jsx`). Ambos son insumos mandatorios para implementar.
