@@ -1,179 +1,127 @@
 /**
- * API Client for Hono Backend
+ * PostgREST API Client
  *
- * Communicates with the Hono server running on the VPS.
- * Base URL from environment variable: VITE_API_URL
- *
- * Examples:
- *   - apiGet('/transactions?mes=2026-04')
- *   - apiPost('/transactions', { monto: 1000, ... })
- *   - apiPatch('/transactions/123', { validado: true })
- *   - apiDelete('/transactions/123')
+ * Base URL is configured via VITE_API_URL env var.
+ * All write operations use `Prefer: return=representation`
+ * so PostgREST returns the created/updated record.
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-interface ApiOptions extends RequestInit {
-    throwOnError?: boolean;
+if (import.meta.env.DEV && !BASE_URL) {
+  console.warn(
+    '[api] VITE_API_URL is not set. ' +
+    'Create a .env.local file with VITE_API_URL=https://your-postgrest-endpoint'
+  );
 }
 
-interface ApiResponse<T = any> {
-    data?: T;
-    error?: string;
-    status: number;
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+
+interface RequestOptions {
+  /** PostgREST horizontal filter params (e.g. { activo: 'eq.true' }) */
+  params?: Record<string, string>;
+  /** Request body for POST/PATCH */
+  body?: unknown;
+  /** Additional headers */
+  headers?: Record<string, string>;
 }
+
+// ─── Core fetch wrapper ───────────────────────────────────────────────────────
+
+async function request<T>(
+  method: HttpMethod,
+  path: string,
+  options: RequestOptions = {}
+): Promise<T> {
+  const url = new URL(`${BASE_URL}${path}`);
+
+  if (options.params) {
+    Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    // Ask PostgREST to return the affected rows
+    Prefer: 'return=representation',
+    ...options.headers,
+  };
+
+  const res = await fetch(url.toString(), {
+    method,
+    headers,
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`[api] ${method} ${path} → ${res.status}: ${text}`);
+  }
+
+  // 204 No Content (e.g. DELETE without Prefer header)
+  if (res.status === 204) return undefined as unknown as T;
+
+  return res.json() as Promise<T>;
+}
+
+// ─── Public CRUD helpers ──────────────────────────────────────────────────────
 
 /**
- * Generic fetch wrapper with error handling
- */
-async function apiFetch<T>(
-    endpoint: string,
-    options: ApiOptions = {}
-): Promise<ApiResponse<T>> {
-    const { throwOnError = true, ...fetchOptions } = options;
-
-    const url = `${API_URL}${endpoint}`;
-
-    try {
-        const response = await fetch(url, {
-            ...fetchOptions,
-            headers: {
-                'Content-Type': 'application/json',
-                ...fetchOptions.headers,
-            },
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            const error = data.error || `HTTP ${response.status}`;
-            if (throwOnError) {
-                throw new Error(error);
-            }
-            return {
-                error,
-                status: response.status,
-            };
-        }
-
-        return {
-            data,
-            status: response.status,
-        };
-    } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        if (throwOnError) {
-            throw error;
-        }
-        return {
-            error: message,
-            status: 500,
-        };
-    }
-}
-
-/**
- * GET request
+ * GET /table?params
+ * Returns an array of records.
  */
 export async function apiGet<T>(
-    endpoint: string,
-    options?: ApiOptions
-): Promise<T> {
-    const response = await apiFetch<T>(endpoint, {
-        ...options,
-        method: 'GET',
-    });
-
-    if (response.error) throw new Error(response.error);
-    return response.data as T;
+  path: string,
+  params?: Record<string, string>
+): Promise<T[]> {
+  return request<T[]>('GET', path, { params });
 }
 
 /**
- * POST request
+ * GET /table?id=eq.{id} — returns single record or null
  */
-export async function apiPost<T>(
-    endpoint: string,
-    body?: any,
-    options?: ApiOptions
-): Promise<T> {
-    const response = await apiFetch<T>(endpoint, {
-        ...options,
-        method: 'POST',
-        body: JSON.stringify(body || {}),
-    });
-
-    if (response.error) throw new Error(response.error);
-    return response.data as T;
+export async function apiGetOne<T>(
+  path: string,
+  params?: Record<string, string>
+): Promise<T | null> {
+  const results = await request<T[]>('GET', path, {
+    params,
+    headers: { Accept: 'application/vnd.pgrst.object+json' },
+  }).catch(() => [] as T[]);
+  return results[0] ?? null;
 }
 
 /**
- * PATCH request (partial update)
+ * POST /table — creates a record, returns the created record.
  */
-export async function apiPatch<T>(
-    endpoint: string,
-    body?: any,
-    options?: ApiOptions
-): Promise<T> {
-    const response = await apiFetch<T>(endpoint, {
-        ...options,
-        method: 'PATCH',
-        body: JSON.stringify(body || {}),
-    });
-
-    if (response.error) throw new Error(response.error);
-    return response.data as T;
+export async function apiPost<TInput, TOutput = TInput>(
+  path: string,
+  body: TInput
+): Promise<TOutput> {
+  const result = await request<TOutput[]>('POST', path, { body });
+  // PostgREST returns array when Prefer: return=representation
+  return Array.isArray(result) ? result[0] : result;
 }
 
 /**
- * PUT request (full replacement)
+ * PATCH /table?filter — updates matching records, returns updated rows.
  */
-export async function apiPut<T>(
-    endpoint: string,
-    body?: any,
-    options?: ApiOptions
-): Promise<T> {
-    const response = await apiFetch<T>(endpoint, {
-        ...options,
-        method: 'PUT',
-        body: JSON.stringify(body || {}),
-    });
-
-    if (response.error) throw new Error(response.error);
-    return response.data as T;
+export async function apiPatch<TInput, TOutput = TInput>(
+  path: string,
+  params: Record<string, string>,
+  body: Partial<TInput>
+): Promise<TOutput[]> {
+  return request<TOutput[]>('PATCH', path, { params, body });
 }
 
 /**
- * DELETE request
+ * DELETE /table?filter — deletes matching records.
  */
-export async function apiDelete<T = void>(
-    endpoint: string,
-    options?: ApiOptions
-): Promise<T> {
-    const response = await apiFetch<T>(endpoint, {
-        ...options,
-        method: 'DELETE',
-    });
-
-    if (response.error) throw new Error(response.error);
-    return response.data as T;
+export async function apiDelete(
+  path: string,
+  params: Record<string, string>
+): Promise<void> {
+  await request<void>('DELETE', path, { params });
 }
-
-/**
- * Batch GET requests (Promise.all)
- */
-export async function apiBatchGet<T extends any[]>(
-    endpoints: string[],
-    options?: ApiOptions
-): Promise<T> {
-    const promises = endpoints.map((endpoint) => apiGet(endpoint, options));
-    return Promise.all(promises) as Promise<T>;
-}
-
-export default {
-    get: apiGet,
-    post: apiPost,
-    patch: apiPatch,
-    put: apiPut,
-    delete: apiDelete,
-    batchGet: apiBatchGet,
-};

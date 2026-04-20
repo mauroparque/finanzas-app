@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTransactions } from '../../hooks/useTransactions';
-import { useAccounts } from '../../hooks/useAccounts';
+import { useMediosPago } from '../../hooks/useMediosPago';
 import { Check, Loader2 } from 'lucide-react';
-import { Timestamp } from 'firebase/firestore';
 import {
     CLASSIFICATION_MAP,
     getCategoriesForUnit,
@@ -16,7 +15,7 @@ interface TransactionFormProps {
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
     const { addTransaction } = useTransactions();
-    const { accounts } = useAccounts();
+    const { accounts } = useMediosPago();
 
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -58,17 +57,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
         setLoading(true);
         try {
             await addTransaction({
-                amount: parseFloat(formData.amount),
-                type: formData.type,
-                currency: formData.currency,
-                unit: formData.unit,
-                category: formData.category,
-                concept: formData.concept,
-                detail: formData.detail || formData.concept,
-                date_operation: Timestamp.fromDate(new Date(formData.date_operation)),
-                account: formData.account,
-                isRecurring: formData.isRecurring,
-                source: 'manual'
+                monto: parseFloat(formData.amount),
+                tipo: formData.type === 'expense' ? 'gasto' : 'ingreso',
+                moneda: formData.currency,
+                unidad: formData.unit,
+                categoria: formData.category,
+                concepto: formData.concept,
+                detalle: formData.detail || formData.concept,
+                fecha_operacion: new Date(formData.date_operation).toISOString(),
+                medio_pago: String(formData.account),
+                fuente: 'manual'
             });
             setLoading(false);
             onSuccess();
@@ -203,10 +201,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                         <button
                             key={acc.id}
                             type="button"
-                            onClick={() => setFormData({ ...formData, account: acc.id })}
-                            className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all truncate ${formData.account === acc.id ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            onClick={() => setFormData({ ...formData, account: acc.nombre })}
+                            className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all truncate ${formData.account === acc.nombre ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
                         >
-                            {acc.name}
+                            {acc.nombre}
                         </button>
                     ))}
                     {accounts.length === 0 && <p className="text-[10px] text-slate-500 italic col-span-2">No hay cuentas...</p>}

@@ -1,143 +1,302 @@
-// UI Types
-export type Screen = 'inicio' | 'carga' | 'pasivos' | 'tarjetas' | 'horizonte' | 'analisis';
+/**
+ * src/types/index.ts — Domain types for Finanzas 2.0
+ *
+ * All fields use PostgreSQL column names (snake_case) so they map
+ * directly to PostgREST responses without any transformation layer.
+ */
 
-// Enums and Constants
-export type Macro = 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
-export type Unit = 'HOGAR' | 'BRASIL' | 'PROFESIONAL';
-export type Currency = 'ARS' | 'USD' | 'USDT';
-export type PaymentMethod = 'Efectivo' | 'Mercado Pago' | 'Personal Pay' | 'BNA' | 'BBVA Visa' | 'BNA Mastercard' | 'BNA Visa' | 'Fiwind' | 'Brubank' | 'Débito BNA';
-export type QuestionMark = 'Mauro' | 'Agos' | 'Compartido';
-export type InstallmentType = 'prestamo' | 'cuota_bien' | 'deuda';
-export type InstallmentStatus = 'activo' | 'cancelado' | 'pausado';
-export type CuotaStatus = 'pendiente' | 'pagado' | 'vencido';
-export type AlertType = 'vencimiento_servicio' | 'vencimiento_cuota' | 'saldo_bajo';
-export type Source = 'app' | 'n8n' | 'migration';
+// ────────────────────────────────────────────────────────────────────────────
+// UI / Navigation
+// ────────────────────────────────────────────────────────────────────────────
 
-// Core Domain Models
+export type Screen =
+  | 'dashboard'
+  | 'movimientos'
+  | 'tarjetas'
+  | 'servicios'
+  | 'analisis'
+  | 'cotizaciones';
 
-// Transaction — Gasto individual
-export interface Transaction {
-    id: number | string;
+// ────────────────────────────────────────────────────────────────────────────
+// Shared vocabularies
+// ────────────────────────────────────────────────────────────────────────────
 
-    // Clasificación (Macro → Categoría → Concepto → Detalle)
-    macro: Macro;
-    categoria: string;
-    concepto: string;
-    detalle: string;  // texto libre
+export type Moneda = 'ARS' | 'USD' | 'USDT' | 'BRL';
+export type Unidad = 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
+export type TipoMovimiento = 'gasto' | 'ingreso';
+export type EstadoPrevisto = 'PENDING' | 'RESERVED' | 'PAID' | 'PAGADO';
 
-    // Atributos de gasto
-    monto: number;
-    moneda: Currency;
+// ────────────────────────────────────────────────────────────────────────────
+// movimientos — core financial transactions
+// ────────────────────────────────────────────────────────────────────────────
 
-    // Contexto
-    unidad: Unit;
-    quien: QuestionMark;
-    medio_pago: PaymentMethod;
+export interface Movimiento {
+  id: number;
+  tipo: TipoMovimiento;
+  monto: number;                     // numeric → use parseFloat() before arithmetic
+  moneda: Moneda;
 
-    // Cuota
-    es_cuota?: boolean;
-    cuota_id?: number | string;
-    numero_cuota?: number;
+  // Classification hierarchy
+  unidad: Unidad;
+  categoria: string;                 // e.g. "Vivienda y Vida Diaria"
+  concepto: string;                  // e.g. "Abastecimiento"
+  detalle: string;                   // e.g. "Supermercado Coto"
 
-    // Timeline
-    fecha_operacion: Date | string;  // ISO string o Date
+  // Timeline
+  fecha_operacion: string;           // ISO 8601, timestamp with time zone
+  fecha_carga: string;               // auto-set on insert
 
-    // Metadata
-    validado?: boolean;
-    editado_por_ia?: boolean;
-    source: Source;
-    fecha_carga: Date | string;
-    notas?: string;
+  // Relations
+  medio_pago: string;                // FK → medios_pago.nombre
+
+  // Source tracking
+  fuente: 'manual' | 'telegram' | 'n8n' | 'importacion';
+  external_id?: string;
+  notas?: string;
 }
 
-// InstallmentPlan — Plan de cuotas o préstamo
-export interface InstallmentPlan {
-    id: number | string;
-    nombre: string;
-    tipo: InstallmentType;
+export type MovimientoInput = Omit<Movimiento, 'id' | 'fecha_carga'>;
 
-    macro?: Macro;
-    categoria?: string;
-    concepto?: string;
-    unidad: Unit;
+// ────────────────────────────────────────────────────────────────────────────
+// medios_pago — payment accounts/methods
+// ────────────────────────────────────────────────────────────────────────────
 
-    monto_total?: number;  // NULL para préstamos existentes
-    total_cuotas: number;
-    monto_cuota: number;
-    moneda: Currency;
-
-    medio_pago: PaymentMethod;
-    fecha_inicio: Date | string;
-    fecha_fin_est: Date | string;
-
-    estado: InstallmentStatus;
-    notas?: string;
-    creado_en?: Date | string;
+export interface MedioPago {
+  id: number;
+  nombre: string;                    // "Mercadopago Mauro", "Efectivo ARS"
+  tipo: 'banco' | 'virtual' | 'efectivo';
+  moneda: Moneda;
+  saldo: number;
+  saldo_inicial: number;
+  activo: boolean;
+  color?: string;
+  icono?: string;
 }
 
-// Cuota — Cuota individual generada automáticamente
-export interface Cuota {
-    id: number | string;
-    plan_id: number | string;
-    numero: number;
+export type MedioPagoInput = Omit<MedioPago, 'id'>;
 
-    fecha_vencimiento: Date | string;
-    monto: number;
-    estado: CuotaStatus;
+// ────────────────────────────────────────────────────────────────────────────
+// servicios_definicion — recurring service templates
+// ────────────────────────────────────────────────────────────────────────────
 
-    transaction_id?: number | string;  // FK cuando está pagada
-    pagado_en?: Date | string;
+export interface ServicioDefinicion {
+  id: number;
+  nombre: string;                    // "EPEC", "Netflix", "Alquiler Brasil"
+  monto_estimado?: number;
+  moneda: Moneda;
+  unidad: Unidad;
+  categoria: string;
+  concepto: string;
+  detalle: string;
+  dia_vencimiento: number;           // 1–31
+  medio_pago_default?: string;
+  es_debito_automatico: boolean;
+  activo: boolean;
+  descripcion?: string;
 }
 
-// MonthlyIncome — Ingreso mensual
-export interface MonthlyIncome {
-    id: number | string;
-    mes: Date | string;  // primer día del mes (YYYY-MM-01)
-    monto: number;
-    moneda: Currency;
-    notas?: string;
+export type ServicioDefinicionInput = Omit<ServicioDefinicion, 'id'>;
+
+// ────────────────────────────────────────────────────────────────────────────
+// ingresos_definicion — recurring income templates
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface IngresoDefinicion {
+  id: number;
+  nombre: string;                    // "Honorarios", "Alquiler cobrado"
+  monto_estimado?: number;
+  moneda: Moneda;
+  unidad: Unidad;
+  categoria: string;
+  concepto: string;
+  detalle: string;
+  dia_esperado: number;              // Expected day of income in the month
+  medio_pago_default?: string;
+  activo: boolean;
 }
 
-// Alert — Alerta generada automáticamente
-export interface Alert {
-    id: number | string;
-    tipo: AlertType;
-    referencia_id?: number | string;  // ID del servicio o cuota relacionado
-    descripcion: string;
-    fecha_alerta: Date | string;
-    monto?: number;
-    leida: boolean;
-    creada_en?: Date | string;
+export type IngresoDefinicionInput = Omit<IngresoDefinicion, 'id'>;
+
+// ────────────────────────────────────────────────────────────────────────────
+// movimientos_previstos_mes — monthly execution of recurring definitions
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface MovimientoPrevisto {
+  id: number;
+  periodo: string;                   // "2026-03" (YYYY-MM)
+  tipo: TipoMovimiento;
+  referencia_id: number;             // FK → servicios_definicion.id or ingresos_definicion.id
+  referencia_tipo: 'servicio' | 'ingreso';
+  nombre: string;
+  monto_estimado?: number;
+  monto_real?: number;
+  moneda: Moneda;
+  estado: EstadoPrevisto;
+  fecha_pago?: string;
+  movimiento_id?: number;            // FK → movimientos.id (set when PAID)
+  notas?: string;
 }
 
-// Legacy types (mantener para compatibilidad temporal)
-export interface Account {
-    id: string;
-    name: string;
-    type: 'bank' | 'virtual' | 'cash';
-    isActive: boolean;
-    currency: Currency;
-    balance: number;
-    initial_balance: number;
-    color: string;
-    icon: string;
+// ────────────────────────────────────────────────────────────────────────────
+// presupuestos_definicion — budget templates per category/concept
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface PresupuestoDefinicion {
+  id: number;
+  tipo_objetivo: 'categoria' | 'concepto';
+  nombre_objetivo: string;
+  limite: number;
+  moneda: Moneda;
+  unidad?: Unidad;
+  porcentaje_alerta: number;         // e.g. 80 → alert at 80% spent
+  activo: boolean;
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// cuotas_tarjeta — credit card installment purchases
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface CuotaTarjeta {
+  id: number;
+  descripcion: string;
+  tarjeta: string;                   // Card name / account
+  monto_cuota: number;
+  moneda: Moneda;
+  cuota_actual: number;
+  total_cuotas: number;
+  fecha_inicio: string;
+  unidad: Unidad;
+  categoria: string;
+  concepto: string;
+  detalle: string;
+  activo: boolean;
+}
+
+export type CuotaTarjetaInput = Omit<CuotaTarjeta, 'id'>;
+
+// ────────────────────────────────────────────────────────────────────────────
+// prestamos — bank loans
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface Prestamo {
+  id: number;
+  descripcion: string;
+  entidad: string;                   // Bank / lender name
+  monto_original: number;
+  monto_cuota: number;
+  moneda: Moneda;
+  cuota_actual: number;
+  total_cuotas: number;
+  fecha_inicio: string;
+  tasa_anual?: number;
+  activo: boolean;
+}
+
+export type PrestamoInput = Omit<Prestamo, 'id'>;
+
+// ────────────────────────────────────────────────────────────────────────────
+// cotizaciones_fx — cached FX rates from CriptoYa
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface CotizacionFX {
+  id: number;
+  par: string;                       // "USD_ARS", "BRL_ARS"
+  tipo: string;                      // "blue", "oficial", "ccl", "mep", etc.
+  compra: number;
+  venta: number;
+  timestamp: string;                 // ISO 8601
+}
+
+// ─── Utility: FX display pair ─────────────────────────────────────────────────
+
+export interface CotizacionDisplay {
+  label: string;
+  compra: number;
+  venta: number;
+  tipo: string;
+  variacion?: 'up' | 'down' | 'stable';
+}
+
+// ─── Legacy aliases kept for components not yet migrated ─────────────────────
+// These will be removed incrementally as components are refactored.
+
+/** @deprecated Use Movimiento */
+export type Transaction = Movimiento;
+
+/** @deprecated Use MedioPago */
+export type Account = MedioPago;
+
+// ─── Legacy: Service/ServiceStatus/Budget (will be replaced in Phase 2) ──────
+
+/** @deprecated Legacy status enum — use EstadoPrevisto */
+export enum ServiceStatus {
+  PENDING = 'PENDING',
+  RESERVED = 'RESERVED',
+  PAID = 'PAID',
+}
+
+/** @deprecated Legacy service type — use ServicioDefinicion + MovimientoPrevisto */
 export interface Service {
-    id: string;
-    name: string;
-    amount: number;
-    currency: Currency;
-    unit: Unit;
-    category: string;
-    concept: string;
-    detail: string;
-    dueDate: number;
-    status: 'PENDING' | 'RESERVED' | 'PAID';
-    account_default?: string;
-    isAutoPay: boolean;
-    last_amount?: number;
-    variation?: 'up' | 'down' | 'stable';
-    description?: string;
-    isActive: boolean;
+  id: string;
+  name: string;
+  amount: number;
+  currency: Moneda;
+  unit: Unidad;
+  category: string;
+  concept: string;
+  detail: string;
+  dueDate: number;
+  status: ServiceStatus;
+  account_default?: string;
+  isAutoPay: boolean;
+  last_amount?: number;
+  variation?: 'up' | 'down' | 'stable';
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** @deprecated Legacy alias */
+export type ServiceItem = Service;
+
+/** @deprecated Legacy budget type — use PresupuestoDefinicion */
+export interface Budget {
+  id: string;
+  target_type: 'category' | 'concept';
+  target_name: string;
+  limit: number;
+  currency: Moneda;
+  unit?: Unidad | 'GLOBAL';
+  spent: number;
+  alertThreshold: number;
+  period: 'monthly';
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** @deprecated Legacy UI type */
+export interface BudgetCategory {
+  name: string;
+  limit: number;
+  spent: number;
+  icon: string;
+}
+
+/** @deprecated Legacy UI type */
+export interface CreditCardItem {
+  id: string;
+  description: string;
+  currentInstallment: number;
+  totalInstallments: number;
+  amount: number;
+  category: string;
+}
+
+/** @deprecated Legacy recurring config */
+export interface RecurringConfig {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  dayOfMonth?: number;
+  nextOccurrence: string;
+  endDate?: string;
 }

@@ -1,113 +1,112 @@
-import { useState, useEffect } from 'react';
-import {
-    collection,
-    query,
-    orderBy,
-    onSnapshot,
-    doc,
-    Timestamp,
-    where,
-    writeBatch,
-    increment,
-    deleteDoc,
-    updateDoc
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { Transaction } from '../types';
+import { useState, useCallback, useEffect } from 'react';
+import { apiGet, apiPost, apiPatch, apiDelete } from '../config/api';
+import type { Movimiento, MovimientoInput } from '../types';
 
-export const useTransactions = (filters?: { category?: string; unit?: string; month?: Date }) => {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export const useTransactions = (filters?: {
+  categoria?: string;
+  unidad?: string;
+  month?: Date;
+}) => {
+  const [transactions, setTransactions] = useState<Movimiento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        setLoading(true);
-        const collectionRef = collection(db, 'transactions');
-        let q = query(collectionRef, orderBy('date_operation', 'desc'));
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-        if (filters?.unit) {
-            q = query(q, where('unit', '==', filters.unit));
-        }
+    try {
+      // Base params with ordering
+      const params: Record<string, string> = {
+        order: 'fecha_operacion.desc',
+      };
 
-        if (filters?.category) {
-            q = query(q, where('category', '==', filters.category));
-        }
+      if (filters?.unidad) {
+        params.unidad = `eq.${filters.unidad}`;
+      }
 
-        if (filters?.month) {
-            const start = new Date(filters.month.getFullYear(), filters.month.getMonth(), 1);
-            const end = new Date(filters.month.getFullYear(), filters.month.getMonth() + 1, 0, 23, 59, 59);
-            q = query(q, where('date_operation', '>=', Timestamp.fromDate(start)), where('date_operation', '<=', Timestamp.fromDate(end)));
-        }
+      if (filters?.categoria) {
+        params.categoria = `eq.${filters.categoria}`;
+      }
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Transaction[];
-            setTransactions(data);
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching transactions:", err);
-            setError('Error al cargar transacciones');
-            setLoading(false);
-        });
+      if (filters?.month) {
+        // Map to first and last day of the month for PostgREST
+        const year = filters.month.getFullYear();
+        const month = (filters.month.getMonth() + 1).toString().padStart(2, '0');
+        const firstDay = `${year}-${month}-01T00:00:00Z`;
 
-        return () => unsubscribe();
-    }, [filters?.category, filters?.unit, filters?.month?.toISOString()]);
+        const lastDayDate = new Date(year, filters.month.getMonth() + 1, 0);
+        const lastDay = `${year}-${month}-${lastDayDate.getDate().toString().padStart(2, '0')}T23:59:59Z`;
 
-    const addTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'date_validation'>) => {
-        try {
-            const batch = writeBatch(db);
+        params['and'] = `(fecha_operacion.gte.${firstDay},fecha_operacion.lte.${lastDay})`;
+      }
 
-            const newTxRef = doc(collection(db, 'transactions'));
-            const now = Timestamp.now();
+      const data = await apiGet<Movimiento>('/movimientos', params);
+      setTransactions(data);
+    } catch (err) {
+      console.error("Error fetching movimientos:", err);
+      setError('Error al cargar movimientos');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters?.categoria, filters?.unidad, filters?.month?.toISOString()]);
 
-            batch.set(newTxRef, {
-                ...transaction,
-                id: newTxRef.id,
-                date_validation: now, // Validated at creation for manual entry
-                createdAt: now,
-                updatedAt: now
-            });
+  // Initial fetch and fetch on filter changes
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
-            if (transaction.account) {
-                const accountRef = doc(db, 'accounts', transaction.account);
-                const balanceChange = transaction.type === 'income' ? transaction.amount : -transaction.amount;
+  const addTransaction = async (transaction: MovimientoInput) => {
+    try {
+      // In PostgreSQL we just insert the record.
+      // Triggers or backend logic might handle balance updates, or we do it separately.
+      // Currently, PostgREST direct insert:
+      const newTx = await apiPost<MovimientoInput, Movimiento>('/movimientos', transaction);
+      
+      // We manually update local state to reflect the addition immediately
+      setTransactions(prev => [newTx, ...prev]);
+      
+      // If we also need to update medio_pago balance, we would do it here or via a DB trigger.
+      // Usually, DB triggers handle the account balance changes based on operations.
+      // We will assume the frontend only needs to refresh medio_pago or we just insert.
+      
+      return newTx;
+    } catch (err) {
+      console.error("Error adding movimiento:", err);
+      throw err;
+    }
+  };
 
-                batch.set(accountRef, {
-                    balance: increment(balanceChange),
-                    updatedAt: now
-                }, { merge: true });
-            }
+  const updateTransaction = async (id: number, updates: Partial<Movimiento>) => {
+    try {
+      const updatedArray = await apiPatch<Movimiento, Movimiento>('/movimientos', { id: `eq.${id}` }, updates);
+      if (updatedArray.length > 0) {
+        const updated = updatedArray[0];
+        setTransactions(prev => prev.map(t => (t.id === id ? updated : t)));
+      }
+    } catch (err) {
+      console.error("Error updating movimiento:", err);
+      throw err;
+    }
+  };
 
-            await batch.commit();
-        } catch (err) {
-            console.error("Error adding transaction:", err);
-            throw err;
-        }
-    };
+  const deleteTransaction = async (id: number) => {
+    try {
+      await apiDelete('/movimientos', { id: `eq.${id}` });
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    } catch (err) {
+      console.error("Error deleting movimiento:", err);
+      throw err;
+    }
+  };
 
-    const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
-        try {
-            const docRef = doc(db, 'transactions', id);
-            await updateDoc(docRef, {
-                ...updates,
-                updatedAt: Timestamp.now()
-            });
-        } catch (err) {
-            console.error("Error updating transaction:", err);
-            throw err;
-        }
-    };
-
-    const deleteTransaction = async (id: string) => {
-        try {
-            await deleteDoc(doc(db, 'transactions', id));
-        } catch (err) {
-            console.error("Error deleting transaction:", err);
-            throw err;
-        }
-    };
-
-    return { transactions, loading, error, addTransaction, updateTransaction, deleteTransaction };
+  return {
+    transactions,  // which are actually Movimiento[] now
+    loading,
+    error,
+    refresh: fetchTransactions,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction
+  };
 };
