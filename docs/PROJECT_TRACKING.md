@@ -165,14 +165,14 @@ Lo que **no** ha migrado todavía (pendiente en Phase 1/2): `App.tsx` sigue con 
 
 ## Deuda Técnica Conocida
 
-| Item                                                            | Severidad | Descripción                                                                                                                                  |
-| --------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------- | ---------- | ----------- | --------------------------------------- | ------- | ------------ |
-| `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `'inicio'                                                                                             | 'carga' | 'pasivos' | 'tarjetas' | 'horizonte' | 'analisis'`pero`App.tsx`usa`'dashboard' | 'cards' | 'services'`. |
-| `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                            |
-| Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.               |
-| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS | Alta      | Las tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) no existen en producción todavía. Bloquea todo el flujo E2E. |
-| `useBudgets.ts` no migrado                                      | Baja      | Hook secundario todavía sin conectar al nuevo cliente PostgREST.                                                                             |
-| Worktree `feat/phase1-foundation` sin mergear                   | Alta      | Tres commits de trabajo real no están en `main`. Riesgo de divergencia si se sigue trabajando en `main`.                                     |
+| Item                                                            | Severidad | Descripción                                                                                                                                     |
+| --------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `inicio, carga, pasivos, tarjetas, horizonte, analisis` pero `App.tsx` usa `dashboard, cards, services`. |
+| `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                               |
+| Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.                  |
+| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS | Alta      | Las tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) no existen en producción todavía. Bloquea todo el flujo E2E.    |
+| `useBudgets.ts` no migrado                                      | Baja      | Hook secundario todavía sin conectar al nuevo cliente PostgREST.                                                                                |
+| Worktree `feat/phase1-foundation` sin mergear                   | Alta      | Tres commits de trabajo real no están en `main`. Riesgo de divergencia si se sigue trabajando en `main`.                                        |
 
 ---
 
