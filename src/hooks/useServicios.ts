@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPatch, apiPost } from '../config/api';
 import type {
+  Movimiento,
+  MovimientoInput,
   MovimientoPrevisto,
   ServicioDefinicion,
   ServicioDefinicionInput,
@@ -84,13 +86,28 @@ export const useServicios = () => {
 
   const marcarComoPagado = async (id: number, monto: number) => {
     try {
-      // Find the previsto and its service definition to get classification data
       const previsto = movimientosPrevistos.find(mp => mp.id === id);
       if (!previsto) throw new Error(`MovimientoPrevisto id=${id} no encontrado`);
 
       const def = servicios.find(s => s.id === previsto.referencia_id);
+      if (!def) throw new Error(`ServicioDefinicion referencia_id=${previsto.referencia_id} no encontrada — no se puede registrar el pago sin clasificación`);
 
-      // 1. Update movimientos_previstos_mes → PAGADO
+      // 1. Crear el movimiento primero para capturar su id
+      const nuevoMovimiento = await apiPost<MovimientoInput, Movimiento>('/movimientos', {
+        tipo: 'gasto',
+        monto,
+        moneda: previsto.moneda,
+        unidad: def.unidad,
+        categoria: def.categoria,
+        concepto: def.concepto,
+        detalle: def.detalle,
+        fecha_operacion: new Date().toISOString(),
+        medio_pago: def.medio_pago_default ?? 'Efectivo ARS',
+        fuente: 'manual',
+        notas: `Pago de servicio: ${previsto.nombre}`,
+      });
+
+      // 2. Marcar el previsto como PAGADO con back-reference al movimiento creado
       const updated = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(
         '/movimientos_previstos_mes',
         { id: `eq.${id}` },
@@ -98,23 +115,9 @@ export const useServicios = () => {
           estado: 'PAGADO' as EstadoPrevisto,
           monto_real: monto,
           fecha_pago: new Date().toISOString(),
+          movimiento_id: nuevoMovimiento.id,
         }
       );
-
-      // 2. Create a real movimiento
-      await apiPost('/movimientos', {
-        tipo: 'gasto',
-        monto,
-        moneda: previsto.moneda,
-        unidad: def?.unidad ?? 'HOGAR',
-        categoria: def?.categoria ?? 'Vivienda y Vida Diaria',
-        concepto: def?.concepto ?? 'Servicios e Impuestos',
-        detalle: def?.detalle ?? previsto.nombre,
-        fecha_operacion: new Date().toISOString(),
-        medio_pago: def?.medio_pago_default ?? 'Efectivo ARS',
-        fuente: 'manual' as const,
-        notas: `Pago de servicio: ${previsto.nombre}`,
-      });
 
       // 3. Update local state
       if (updated.length > 0) {

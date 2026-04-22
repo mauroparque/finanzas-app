@@ -7,12 +7,14 @@ import { cn } from '../utils/cn';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatARS(amount: number): string {
-  return new Intl.NumberFormat('es-AR', {
+function formatCurrency(amount: number, moneda: string = 'ARS'): string {
+  const currency = moneda === 'USDT' ? 'USD' : moneda;
+  const formatted = new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'ARS',
+    currency,
     maximumFractionDigits: 0,
   }).format(amount);
+  return moneda === 'USDT' ? formatted.replace('US$', 'USDT') : formatted;
 }
 
 function formatNextDueDate(fechaInicio: string, cuotaActual: number): string {
@@ -47,9 +49,9 @@ const EmptyState = ({ message }: { message: string }) => (
 // ─── Cuotas section ───────────────────────────────────────────────────────────
 
 const CuotasSection = () => {
-  const { cuotas, isLoading, error } = useCuotasTarjeta();
+  const { cuotas, loading, error } = useCuotasTarjeta();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <section>
         <SectionHeading>Cuotas activas</SectionHeading>
@@ -102,7 +104,7 @@ const CuotasSection = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-stone-800">
-                      {formatARS(parseFloat(String(cuota.monto_cuota)))}
+                      {formatCurrency(parseFloat(String(cuota.monto_cuota)), cuota.moneda)}
                     </p>
                     <p className="text-xs text-stone-400">
                       {cuota.cuota_actual}&nbsp;/&nbsp;{cuota.total_cuotas}
@@ -144,9 +146,9 @@ const CuotasSection = () => {
 // ─── Préstamos section ────────────────────────────────────────────────────────
 
 const PrestamosSection = () => {
-  const { prestamos, isLoading, error } = usePrestamos();
+  const { prestamos, loading, error } = usePrestamos();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <section>
         <SectionHeading>Préstamos</SectionHeading>
@@ -214,13 +216,13 @@ const PrestamosSection = () => {
                   <div className="bg-stone-50 rounded-xl p-2.5">
                     <p className="text-xs text-stone-400 mb-0.5">Cuota mensual</p>
                     <p className="text-sm font-bold text-stone-800">
-                      {formatARS(parseFloat(String(prestamo.monto_cuota)))}
+                      {formatCurrency(parseFloat(String(prestamo.monto_cuota)), prestamo.moneda)}
                     </p>
                   </div>
                   <div className="bg-stone-50 rounded-xl p-2.5">
                     <p className="text-xs text-stone-400 mb-0.5">Saldo pendiente</p>
                     <p className="text-sm font-bold text-stone-800">
-                      {formatARS(Math.max(0, saldoPendiente))}
+                      {formatCurrency(Math.max(0, saldoPendiente), prestamo.moneda)}
                     </p>
                   </div>
                 </div>

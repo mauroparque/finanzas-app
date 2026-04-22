@@ -21,8 +21,11 @@ import { cn } from '../utils/cn';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const formatARS = (value: number) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(value);
+const formatCurrency = (value: number, moneda: string = 'ARS') => {
+  const currency = moneda === 'USDT' ? 'USD' : moneda;
+  const formatted = new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
+  return moneda === 'USDT' ? formatted.replace('US$', 'USDT') : formatted;
+};
 
 const getSectionHeading = 'text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3';
 
@@ -117,10 +120,18 @@ const Dashboard: React.FC = () => {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
-  const { transactions } = useTransactions({ month: new Date() });
+  const currentMonth = useMemo(() => new Date(), []);
+  const { transactions } = useTransactions({ month: currentMonth });
 
-  // ── Derived: total balance ─────────────────────────────────────────────────
-  const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(String(acc.saldo)), 0);
+  // ── Derived: saldo agrupado por moneda (no mezclar ARS con USD/BRL) ────────
+  const saldoPorMoneda = useMemo(() => {
+    const groups: Record<string, number> = {};
+    accounts.forEach(acc => {
+      const m = acc.moneda;
+      groups[m] = (groups[m] ?? 0) + parseFloat(String(acc.saldo));
+    });
+    return groups;
+  }, [accounts]);
 
   // ── Derived: upcoming deadlines ───────────────────────────────────────────
   const upcomingDeadlines = useMemo(
@@ -205,9 +216,16 @@ const Dashboard: React.FC = () => {
         {loadingAccounts ? (
           <SkeletonLine className="h-10 w-40 bg-stone-800" />
         ) : (
-          <p className="text-3xl font-bold text-stone-50 tracking-tight">
-            {formatARS(totalBalance)}
-          </p>
+          <div className="space-y-0.5">
+            {Object.entries(saldoPorMoneda).map(([moneda, total]) => (
+              <p key={moneda} className="text-3xl font-bold text-stone-50 tracking-tight">
+                {formatCurrency(total, moneda)}
+              </p>
+            ))}
+            {Object.keys(saldoPorMoneda).length === 0 && (
+              <p className="text-3xl font-bold text-stone-50 tracking-tight">—</p>
+            )}
+          </div>
         )}
 
         {/* Accounts list */}
@@ -222,7 +240,7 @@ const Dashboard: React.FC = () => {
                   {acc.nombre}
                 </p>
                 <p className="text-sm font-bold text-stone-100 tracking-tight">
-                  {formatARS(parseFloat(String(acc.saldo)))}
+                  {formatCurrency(parseFloat(String(acc.saldo)), acc.moneda)}
                 </p>
               </div>
             ))}
@@ -255,7 +273,7 @@ const Dashboard: React.FC = () => {
                   {cfg.label}
                 </p>
                 <p className="text-base font-bold text-stone-900 tracking-tight">
-                  {formatARS(gastosPorMacro[key])}
+                  {formatCurrency(gastosPorMacro[key])}
                 </p>
               </div>
             </div>
@@ -279,7 +297,7 @@ const Dashboard: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {presupuestosConGasto.map(p => {
-              const percentage = Math.min((p.spent / p.limite) * 100, 100);
+              const percentage = p.limite > 0 ? Math.min((p.spent / p.limite) * 100, 100) : 0;
               const isNearLimit = percentage >= p.porcentaje_alerta;
               const isOver = p.spent > p.limite;
               const barColor = isNearLimit || isOver ? 'bg-terracotta-400' : 'bg-sage-400';
@@ -310,10 +328,10 @@ const Dashboard: React.FC = () => {
                         'text-sm font-bold tracking-tight',
                         isOver ? 'text-terracotta-600' : 'text-stone-800',
                       )}>
-                        {formatARS(p.spent)}
+                        {formatCurrency(p.spent, p.moneda)}
                       </p>
                       <p className="text-[10px] text-stone-400 font-medium">
-                        de {formatARS(p.limite)}
+                        de {formatCurrency(p.limite, p.moneda)}
                       </p>
                     </div>
                   </div>
@@ -386,7 +404,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     {monto != null && (
                       <p className="text-sm font-bold text-stone-900 tracking-tight tabular-nums">
-                        {formatARS(parseFloat(String(monto)))}
+                        {formatCurrency(parseFloat(String(monto)), mp.moneda)}
                       </p>
                     )}
                   </li>

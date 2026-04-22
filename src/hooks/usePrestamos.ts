@@ -4,7 +4,7 @@ import type { Prestamo } from '../types';
 
 export const usePrestamos = () => {
   const [prestamos, setPrestamos] = useState<Prestamo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPrestamos = useCallback(async () => {
@@ -30,7 +30,7 @@ export const usePrestamos = () => {
 
   return {
     prestamos,
-    isLoading,
+    loading,
     error,
     refresh: fetchPrestamos,
   };

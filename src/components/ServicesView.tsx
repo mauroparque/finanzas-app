@@ -10,7 +10,7 @@ interface ServicesViewProps {
 }
 
 const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
-  const { movimientosPrevistos, servicios, loading, updateEstado, addServicio, marcarComoPagado } = useServicios();
+  const { movimientosPrevistos, servicios, loading, addServicio, marcarComoPagado } = useServicios();
 
   // — Add service modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -136,7 +136,7 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="space-y-6 animate-in zoom-in-95 duration-500 pb-20">
+    <div className="space-y-6 pb-20">
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-2xl font-bold text-stone-800 mb-1">Pagos Mensuales</h1>
@@ -151,20 +151,20 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
       </header>
 
       {/* Monthly Progress Bar */}
-      <section className="bg-stone-800 p-5 rounded-3xl border border-stone-700 shadow-lg relative overflow-hidden">
-        <div className="flex justify-between items-end mb-4 relative z-10">
+      <section className="bg-white p-5 rounded-3xl border border-stone-200 shadow-soft">
+        <div className="flex justify-between items-end mb-4">
           <div>
             <p className="text-[10px] font-bold uppercase text-stone-400 tracking-widest mb-1">Progreso del Mes</p>
-            <h3 className="text-3xl font-bold text-white tracking-tight">
+            <h3 className="text-3xl font-bold text-stone-900 tracking-tight">
               {Math.round(progress)}%{' '}
               <span className="text-lg text-stone-400 font-medium">completado</span>
             </h3>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium text-stone-300">{paidCount} / {movimientosPrevistos.length}</p>
+            <p className="text-xs font-medium text-stone-500">{paidCount} / {movimientosPrevistos.length}</p>
           </div>
         </div>
-        <div className="w-full h-3 bg-stone-950 rounded-full overflow-hidden border border-white/5 relative z-10">
+        <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-terracotta-500 transition-all duration-700 ease-out"
             style={{ width: `${progress}%` }}
@@ -235,7 +235,11 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
                           'text-base font-bold tracking-tight',
                           isPaid ? 'text-stone-400' : 'text-stone-800'
                         )}>
-                          ${monto.toLocaleString('es-AR')}
+                          {new Intl.NumberFormat('es-AR', {
+                            style: 'currency',
+                            currency: mp.moneda === 'USDT' ? 'USD' : mp.moneda,
+                            maximumFractionDigits: 0,
+                          }).format(parseFloat(String(monto)))}
                         </p>
                         <p className="text-[9px] text-stone-400 font-bold">{mp.moneda}</p>
                       </>

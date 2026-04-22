@@ -4,7 +4,7 @@ import type { CuotaTarjeta } from '../types';
 
 export const useCuotasTarjeta = () => {
   const [cuotas, setCuotas] = useState<CuotaTarjeta[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCuotas = useCallback(async () => {
@@ -30,7 +30,7 @@ export const useCuotasTarjeta = () => {
 
   return {
     cuotas,
-    isLoading,
+    loading,
     error,
     refresh: fetchCuotas,
   };
