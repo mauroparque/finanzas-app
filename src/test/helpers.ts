@@ -4,7 +4,7 @@ export const mockFetch = (response: unknown, ok = true) => {
     status: ok ? 200 : 400,
     json: () => Promise.resolve(response),
     text: () => Promise.resolve(ok ? '' : 'Bad request'),
-  }) as jest.Mock;
+  }) as ReturnType<typeof vi.fn>;
 };
 
 export const mockFetch204 = () => {
@@ -13,5 +13,5 @@ export const mockFetch204 = () => {
     status: 204,
     json: () => Promise.resolve(undefined),
     text: () => Promise.resolve(''),
-  }) as jest.Mock;
+  }) as ReturnType<typeof vi.fn>;
 };

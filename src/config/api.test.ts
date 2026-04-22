@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   apiGet,
   apiPost,
@@ -11,6 +11,10 @@ describe('PostgREST API CRUD helpers', () => {
   beforeEach(() => {
     import.meta.env.VITE_API_URL = 'https://api.test.com';
     import.meta.env.DEV = true;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('apiGet', () => {
@@ -32,7 +36,7 @@ describe('PostgREST API CRUD helpers', () => {
 
     it('throws on non-ok response', async () => {
       mockFetch(null, false);
-      await expect(apiGet('/test')).rejects.toThrow();
+      await expect(apiGet('/test')).rejects.toThrow('[api] GET');
     });
   });
 
@@ -58,7 +62,7 @@ describe('PostgREST API CRUD helpers', () => {
       mockFetch(updated);
       const result = await apiPatch('/test', { id: 'eq.1' }, { nombre: 'Updated' });
       expect(result).toEqual(updated);
-      const call = (global.fetch as jest.Mock).mock.calls[0];
+      const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
       const [, opts] = call;
       const body = JSON.parse(opts.body as string);
       expect(body).toEqual({ nombre: 'Updated' });
@@ -69,7 +73,7 @@ describe('PostgREST API CRUD helpers', () => {
     it('sends DELETE with filter params', async () => {
       mockFetch(null);
       await apiDelete('/test', { id: 'eq.1' });
-      const call = (global.fetch as jest.Mock).mock.calls[0];
+      const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
       expect(call[0]).toContain('id=eq.1');
       expect(call[1].method).toBe('DELETE');
     });
