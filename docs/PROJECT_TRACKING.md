@@ -2,10 +2,10 @@
 
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
-**Última actualización:** 2026-04-20  
-**Estado general:** En progreso — Phase 1 parcialmente completada en `feat/phase1-foundation`
+**Última actualización:** 2026-04-22  
+**Estado general:** En progreso — Phase 1 en curso, infrastructure Tailscale + PostgREST configurada en VPS
 
-> **Worktree activo:** `feat/phase1-foundation` (`.worktrees/feat-phase1-foundation`, HEAD `e80beef`) contiene trabajo pendiente de merge a `main`. Los ítems marcados `[x]` en Phase 1 y Phase 2 viven en esa rama, no en `main`.
+> **Rama `feat/phase1-foundation` mergeada a `main`** (`e087778`). `main` está al día con el remote. La migration `001_finanzas_rearchitecture.sql` fue ejecutada en el VPS.
 
 ---
 
@@ -19,9 +19,9 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 ## Estado Actual
 
-Phase 0 cerrada. La fundación de datos y arquitectura está alineada con la spec v1.0: tipos de dominio reescritos, taxonomía Macro correcta, cliente PostgREST creado, migration SQL lista para ejecutar en VPS. En la rama `feat/phase1-foundation` (worktree activo) ya se completaron los primeros pasos de Phase 1: `useTransactions.ts` migrado a PostgREST, `useAccounts.ts` reemplazado por `useMediosPago.ts`, `TransactionForm.tsx` actualizado al nuevo esquema, y Tailwind v3 con tokens Editorial Orgánico instalados y configurados.
+Phase 0 cerrada. `feat/phase1-foundation` mergeada a `main`. La migration `001_finanzas_rearchitecture.sql` ejecutada en VPS — tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) disponibles en producción. Infraestructura Tailscale + PostgREST configurada: API accesible en `https://n8n.tail089052.ts.net` (solo via tailnet). Frontend deployado en Firebase Hosting (`https://lince-finanzas-app.web.app/`) con `VITE_API_URL` apuntando al VPS.
 
-Lo que **no** ha migrado todavía (pendiente en Phase 1/2): `App.tsx` sigue con estética dark/neon y screen routing antiguo; `Dashboard.tsx` y `CardsView.tsx` no usan el nuevo diseño; la migration `001_finanzas_rearchitecture.sql` aún no se ejecutó en la VPS. El worktree `feat/phase1-foundation` debe mergearse a `main` para que estos avances sean la base de trabajo.
+Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usando Firestore; `App.tsx` mantiene estética dark/neon; `Dashboard.tsx` y `CardsView.tsx` no usan el nuevo diseño; certificado self-signed en PostgREST es rechazado por browsers (deuda técnica).
 
 ---
 
@@ -57,13 +57,13 @@ Lo que **no** ha migrado todavía (pendiente en Phase 1/2): `App.tsx` sigue con 
 
 **Entregables pendientes:**
 
-- [ ] Mergear `feat/phase1-foundation` a `main`
+- [x] Mergear `feat/phase1-foundation` a `main` — `e087778`
+- [x] Ejecutar `001_finanzas_rearchitecture.sql` en VPS y verificar endpoints
+- [x] Variable de entorno `VITE_API_URL` apuntando al backend real en VPS
+- [ ] Migrar `useServices.ts` de Firestore a PostgREST (`/movimientos_previstos_mes`, `/servicios_definicion`)
+- [ ] Migrar `useBudgets.ts` de Firestore a PostgREST (`/presupuestos_definicion`)
 - [ ] Implementar lógica "último usado" para defaults de Macro/Categoría/Concepto/Medio de pago
 - [ ] Motor de sugerencia IA: dado monto + texto libre, sugerir clasificación (spec §9)
-- [ ] Ejecutar `001_finanzas_rearchitecture.sql` en VPS y verificar endpoints
-- [ ] Variable de entorno `VITE_API_URL` apuntando al backend real en VPS
-
-**Dependencia:** migration en VPS debe ejecutarse antes de poder probar el flujo end-to-end.
 
 ---
 
@@ -170,19 +170,19 @@ Lo que **no** ha migrado todavía (pendiente en Phase 1/2): `App.tsx` sigue con 
 | `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `inicio, carga, pasivos, tarjetas, horizonte, analisis` pero `App.tsx` usa `dashboard, cards, services`. |
 | `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                               |
 | Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.                  |
-| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS | Alta      | Las tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) no existen en producción todavía. Bloquea todo el flujo E2E.    |
-| `useBudgets.ts` no migrado                                      | Baja      | Hook secundario todavía sin conectar al nuevo cliente PostgREST.                                                                                |
-| Worktree `feat/phase1-foundation` sin mergear                   | Alta      | Tres commits de trabajo real no están en `main`. Riesgo de divergencia si se sigue trabajando en `main`.                                        |
+| `useServices.ts` usando Firestore                               | Alta      | Genera errores en consola (`FirebaseError: index required`). Debe migrarse a PostgREST (`/movimientos_previstos_mes`).                          |
+| `useBudgets.ts` usando Firestore                                | Media     | Hook secundario todavía en Firestore. Debe migrarse a `/presupuestos_definicion`.                                                               |
+| Certificado self-signed en PostgREST                            | Media     | Browsers rechazan el cert (`ERR_CERT_AUTHORITY_INVALID`). Requiere cert válido (Let's Encrypt u otro) o aceptación manual por dispositivo.      |
 
 ---
 
 ## Próximos Pasos (accionables)
 
-1. **Mergear `feat/phase1-foundation` a `main`**: tres commits de trabajo real (Tailwind, PostgREST client, hooks migrados) están listos. Hacerlo antes de continuar cualquier desarrollo.
-2. **Ejecutar `001_finanzas_rearchitecture.sql` en VPS**: via CloudBeaver o SSH en Coolify. Verificar que los endpoints de PostgREST respondan (`/movimientos`, `/medios_pago`, etc.).
-3. **Configurar `VITE_API_URL`** en `.env.local` apuntando al backend real.
-4. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta (Tailwind ya está disponible tras el merge).
-5. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Es el desbloqueador de la regla 3 taps para Agos.
+1. **Migrar `useServices.ts`** de Firestore a PostgREST — desbloquea `ServicesView.tsx` y elimina errores en consola.
+2. **Migrar `useBudgets.ts`** de Firestore a PostgREST.
+3. **Eliminar `config/firebase.ts`** una vez que los hooks anteriores estén migrados.
+4. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta.
+5. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Desbloqueador de la regla 3 taps para Agos.
 
 ---
 

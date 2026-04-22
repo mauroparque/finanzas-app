@@ -34,3 +34,6 @@ dist-ssr
 
 # Git worktrees
 .worktrees
+
+# Firebase
+.firebase
