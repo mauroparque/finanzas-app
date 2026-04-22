@@ -31,6 +31,7 @@ export const BottomNav = ({ activeScreen, onNavigate, className }: BottomNavProp
           return (
             <button
               key={screen}
+              type="button"
               onClick={() => onNavigate(screen)}
               className={cn(
                 'flex-1 flex flex-col items-center justify-center gap-0.5',

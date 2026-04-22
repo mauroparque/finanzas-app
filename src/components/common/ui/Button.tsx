@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
 
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   className?: string;

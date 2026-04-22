@@ -1,9 +1,11 @@
+import type { Key, ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
 
 interface CardProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   onClick?: () => void;
+  key?: Key;
 }
 
 export const Card = ({ children, className, onClick }: CardProps) => {

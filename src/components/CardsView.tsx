@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { CreditCard, Landmark } from 'lucide-react';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
@@ -36,7 +37,7 @@ const SkeletonCard = () => (
 
 // ─── Sub-sections ─────────────────────────────────────────────────────────────
 
-const SectionHeading = ({ children }: { children: React.ReactNode }) => (
+const SectionHeading = ({ children }: { children: ReactNode }) => (
   <h2 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3">
     {children}
   </h2>

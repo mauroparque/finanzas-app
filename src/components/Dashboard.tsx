@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type FC, type ReactNode } from 'react';
 import {
   Wallet,
   Calendar,
@@ -35,7 +35,7 @@ type MacroKey = 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
 
 interface MacroConfig {
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   bgClass: string;
   textClass: string;
   borderClass: string;
@@ -102,11 +102,11 @@ function classifyTransaction(unidad: string, categoria: string, concepto: string
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SkeletonLine({ className }: { className?: string }) {
+function SkeletonLine({ className }: { className?: string }): ReactNode {
   return <div className={cn('bg-stone-100 animate-pulse rounded-xl', className)} />;
 }
 
-function CategoryIcon({ category }: { category: string }) {
+function CategoryIcon({ category }: { category: string }): ReactNode {
   const c = category.toLowerCase();
   if (c.includes('aliment') || c.includes('comida') || c.includes('super')) return <ShoppingBag size={16} />;
   if (c.includes('animal') || c.includes('mascota')) return <PawPrint size={16} />;
@@ -116,7 +116,7 @@ function CategoryIcon({ category }: { category: string }) {
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
-const Dashboard: React.FC = () => {
+const Dashboard: FC = () => {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
@@ -146,7 +146,7 @@ const Dashboard: React.FC = () => {
   const gastosPorMacro = useMemo(() => {
     const totals: Record<MacroKey, number> = { VIVIR: 0, TRABAJAR: 0, DEBER: 0, DISFRUTAR: 0 };
     transactions
-      .filter(t => t.tipo === 'gasto')
+      .filter(t => t.tipo === 'gasto' && t.moneda === 'ARS')
       .forEach(t => {
         const key = classifyTransaction(t.unidad, t.categoria, t.concepto);
         totals[key] += parseFloat(String(t.monto));
@@ -161,7 +161,12 @@ const Dashboard: React.FC = () => {
         const spent = transactions
           .filter(t => {
             const campo = p.tipo_objetivo === 'categoria' ? t.categoria : t.concepto;
-            return campo === p.nombre_objetivo && t.tipo === 'gasto';
+            return (
+              campo === p.nombre_objetivo &&
+              t.tipo === 'gasto' &&
+              t.moneda === p.moneda &&
+              (!p.unidad || t.unidad === p.unidad)
+            );
           })
           .reduce((sum, t) => sum + parseFloat(String(t.monto)), 0);
         return { ...p, spent };
