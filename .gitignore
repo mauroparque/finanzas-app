@@ -37,3 +37,6 @@ dist-ssr
 
 # Firebase
 .firebase
+
+# Coverage reports
+coverage

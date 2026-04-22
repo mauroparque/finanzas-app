@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   apiGet,
+  apiGetOne,
   apiPost,
   apiPatch,
   apiDelete,
@@ -37,6 +38,36 @@ describe('PostgREST API CRUD helpers', () => {
     it('throws on non-ok response', async () => {
       mockFetch(null, false);
       await expect(apiGet('/test')).rejects.toThrow('[api] GET');
+    });
+  });
+
+  describe('apiGetOne', () => {
+    it('returns single record when found', async () => {
+      const data = { id: 1, nombre: 'Test' };
+      mockFetch([data]);
+      const result = await apiGetOne<{ id: number; nombre: string }>('/test', { id: 'eq.1' });
+      expect(result).toEqual(data);
+    });
+
+    it('returns null when no record found', async () => {
+      mockFetch([]);
+      const result = await apiGetOne<{ id: number }>('/test', { id: 'eq.999' });
+      expect(result).toBeNull();
+    });
+
+    it('returns null on error', async () => {
+      mockFetch(null, false);
+      const result = await apiGetOne<{ id: number }>('/test');
+      expect(result).toBeNull();
+    });
+
+    it('uses pgrst.object+json accept header', async () => {
+      mockFetch([]);
+      await apiGetOne('/test', { id: 'eq.1' });
+      const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(call[1].headers).toMatchObject({
+        Accept: 'application/vnd.pgrst.object+json',
+      });
     });
   });
 

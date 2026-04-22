@@ -39,6 +39,18 @@ const mockServicioDefinicion = (overrides: Partial<ServicioDefinicion> = {}): Se
   ...overrides,
 });
 
+const defaultServicioInput = {
+  nombre: 'Nuevo Servicio',
+  moneda: 'ARS' as const,
+  unidad: 'HOGAR' as const,
+  categoria: 'Vivienda y Vida Diaria',
+  concepto: 'Servicios',
+  detalle: 'Test',
+  dia_vencimiento: 15,
+  es_debito_automatico: false,
+  activo: true,
+};
+
 describe('useServicios', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -191,6 +203,23 @@ describe('useServicios', () => {
 
       await expect(result.current.updateEstado(5, 'PAID')).rejects.toThrow('Update failed');
     });
+
+    it('does not update local state when updateEstado fails', async () => {
+      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
+      vi.mocked(apiGet).mockResolvedValue([previsto]);
+      vi.mocked(apiPatch).mockRejectedValue(new Error('Update failed'));
+
+      const { result } = renderHook(() => useServicios());
+      await waitFor(() => expect(result.current.movimientosPrevistos).toHaveLength(1));
+
+      try {
+        await result.current.updateEstado(5, 'PAID');
+      } catch {
+        // expected
+      }
+
+      expect(result.current.movimientosPrevistos[0].estado).toBe('PENDING');
+    });
   });
 
   describe('addServicio', () => {
@@ -202,21 +231,9 @@ describe('useServicios', () => {
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      const input = {
-        nombre: 'Nuevo Servicio',
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Servicios',
-        detalle: 'Test',
-        dia_vencimiento: 15,
-        es_debito_automatico: false,
-        activo: true,
-      };
+      await result.current.addServicio(defaultServicioInput);
 
-      await result.current.addServicio(input);
-
-      expect(apiPost).toHaveBeenCalledWith('/servicios_definicion', input);
+      expect(apiPost).toHaveBeenCalledWith('/servicios_definicion', defaultServicioInput);
     });
 
     it('appends new servicio to local state', async () => {
@@ -228,19 +245,7 @@ describe('useServicios', () => {
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.servicios).toHaveLength(1));
 
-      const input = {
-        nombre: 'Nuevo Servicio',
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Servicios',
-        detalle: 'Test',
-        dia_vencimiento: 15,
-        es_debito_automatico: false,
-        activo: true,
-      };
-
-      await result.current.addServicio(input);
+      await result.current.addServicio(defaultServicioInput);
 
       await waitFor(() => {
         expect(result.current.servicios).toHaveLength(2);
@@ -256,19 +261,7 @@ describe('useServicios', () => {
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      const input = {
-        nombre: 'Nuevo Servicio',
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Servicios',
-        detalle: 'Test',
-        dia_vencimiento: 15,
-        es_debito_automatico: false,
-        activo: true,
-      };
-
-      const returned = await result.current.addServicio(input);
+      const returned = await result.current.addServicio(defaultServicioInput);
 
       expect(returned).toEqual(nuevo);
     });
@@ -280,19 +273,7 @@ describe('useServicios', () => {
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      const input = {
-        nombre: 'Nuevo Servicio',
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Servicios',
-        detalle: 'Test',
-        dia_vencimiento: 15,
-        es_debito_automatico: false,
-        activo: true,
-      };
-
-      await expect(result.current.addServicio(input)).rejects.toThrow('Insert failed');
+      await expect(result.current.addServicio(defaultServicioInput)).rejects.toThrow('Insert failed');
     });
   });
 

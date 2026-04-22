@@ -3,9 +3,9 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-22  
-**Estado general:** En progreso — Phase 1 en curso, infrastructure Tailscale + PostgREST configurada en VPS
+**Estado general:** Phase 1 completada — migración Firestore → PostgREST finalizada, app funcional en producción sin errores de consola
 
-> **Rama `feat/phase1-foundation` mergeada a `main`** (`e087778`). `main` está al día con el remote. La migration `001_finanzas_rearchitecture.sql` fue ejecutada en el VPS.
+> **Rama `feat/phase1-foundation` mergeada a `main`** (`e087778`). Migración Firestore → PostgREST completada en esta sesión. App corriendo en `https://lince-finanzas-app.web.app/` con cero errores de consola.
 
 ---
 
@@ -19,9 +19,13 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 ## Estado Actual
 
-Phase 0 cerrada. `feat/phase1-foundation` mergeada a `main`. La migration `001_finanzas_rearchitecture.sql` ejecutada en VPS — tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) disponibles en producción. Infraestructura Tailscale + PostgREST configurada: API accesible en `https://n8n.tail089052.ts.net` (solo via tailnet). Frontend deployado en Firebase Hosting (`https://lince-finanzas-app.web.app/`) con `VITE_API_URL` apuntando al VPS.
+**Phase 1 completada.** La migración de Firestore a PostgREST está terminada. La app no tiene errores de consola. El backend (PostgREST en VPS via Tailscale) responde correctamente. Firebase quedó exclusivamente como hosting estático.
 
-Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usando Firestore; `App.tsx` mantiene estética dark/neon; `Dashboard.tsx` y `CardsView.tsx` no usan el nuevo diseño; certificado self-signed en PostgREST es rechazado por browsers (deuda técnica).
+**Infraestructura operativa:** Tailscale instalado en VPS (`n8n.tail089052.ts.net`). PostgREST desplegado en Coolify como servicio Docker, conectado a la red `coolify` (Traefik como TLS terminator). `VITE_API_URL` configurado y funcional. Rol `web_anon` creado en PostgreSQL con GRANTs a todas las tablas.
+
+**Deuda técnica activa:** (1) Certificado self-signed en PostgREST — browsers requieren aceptar excepción manual por dispositivo. (2) `saldo` en `medios_pago` son todos 0 — necesitan datos reales. (3) Cálculo de `spent` en presupuestos es client-side sin filtro de mes.
+
+**Pendiente para Phase 2:** Rediseño UI Editorial Orgánico (App.tsx dark/neon, Dashboard, navegación responsive).
 
 ---
 
@@ -42,26 +46,31 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 ---
 
-### Phase 1 — Módulo Carga de Gasto + Migración de Hooks [Pendiente]
+### Phase 1 — Módulo Carga de Gasto + Migración de Hooks [Completada — 2026-04-22]
 
 **Objetivo:** Hacer funcionar el flujo completo de carga de un gasto desde la app, consumiendo el backend real. Es la primera funcionalidad que Agos puede usar.
 
 **Regla inamovible:** La carga debe completarse en 3 taps o menos desde el FAB.
 
-**Entregables completados** (en `feat/phase1-foundation`, pendiente merge):
+**Entregables completados:**
 
 - [x] Migrar `useTransactions.ts` de Firebase a `api.ts` (POST/GET `/movimientos`) — `e80beef`
 - [x] Crear `useMediosPago.ts` reemplazando `useAccounts.ts` (GET `/medios_pago`, 70 líneas) — `e80beef`
 - [x] Actualizar `TransactionForm.tsx` al nuevo esquema PostgREST — `e80beef`
-- [x] Actualizar `Dashboard.tsx` para usar `useMediosPago` — `e80beef`
-
-**Entregables pendientes:**
-
+- [x] Actualizar `Dashboard.tsx` para usar `useMediosPago` + `useServicios` + `usePresupuestos`
 - [x] Mergear `feat/phase1-foundation` a `main` — `e087778`
 - [x] Ejecutar `001_finanzas_rearchitecture.sql` en VPS y verificar endpoints
 - [x] Variable de entorno `VITE_API_URL` apuntando al backend real en VPS
-- [ ] Migrar `useServices.ts` de Firestore a PostgREST (`/movimientos_previstos_mes`, `/servicios_definicion`)
-- [ ] Migrar `useBudgets.ts` de Firestore a PostgREST (`/presupuestos_definicion`)
+- [x] Crear `src/hooks/useServicios.ts` — reemplaza `useServices.ts` de Firestore
+- [x] Crear `src/hooks/usePresupuestos.ts` — reemplaza `useBudgets.ts` de Firestore
+- [x] Migrar `ServicesView.tsx` a `useServicios` (PostgreSQL)
+- [x] Migrar `Dashboard.tsx` a `useServicios` + `usePresupuestos` con cálculo client-side de `spent`
+- [x] Eliminar `useServices.ts`, `useBudgets.ts`, `config/firebase.ts`
+- [x] Firebase completamente removido del código fuente (solo queda como hosting)
+- [x] Migrations adicionales ejecutadas en VPS: `RENAME fecha_operation → fecha_operacion`; nuevas columnas `saldo`, `moneda`, `saldo_inicial` en `medios_pago`
+- [x] App con cero errores de consola en producción
+
+**Pendiente (trasladado a fases siguientes):**
 - [ ] Implementar lógica "último usado" para defaults de Macro/Categoría/Concepto/Medio de pago
 - [ ] Motor de sugerencia IA: dado monto + texto libre, sugerir clasificación (spec §9)
 
@@ -137,17 +146,19 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 ### Servicios (checklist mensual)
 
-- [ ] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration `001_finanzas_rearchitecture.sql`)
-- [ ] `useServicios.ts` migrado a Hono
-- [ ] `ServicesView.tsx` mostrando servicios del mes desde DB
+- [x] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration `001_finanzas_rearchitecture.sql`)
+- [x] `useServicios.ts` creado y conectado a PostgREST
+- [x] `ServicesView.tsx` mostrando servicios del mes desde PostgreSQL
 - [ ] Flujo PENDING → PAGADO (actualiza `movimientos_previstos_mes` + crea `movimiento`)
 
 ### Dashboard
 
+- [x] Balance de medios de pago desde PostgreSQL (`useMediosPago`)
+- [x] Presupuestos con cálculo client-side de `spent` desde PostgreSQL
+- [x] Vencimientos de servicios del mes desde PostgreSQL
 - [ ] Resumen por Macro en tiempo real
-- [ ] Widget FX integrado
+- [ ] Widget FX integrado (CriptoYa)
 - [ ] Diseño "Editorial Orgánico" aplicado
-- [ ] Balance de medios de pago actualizado
 
 ### Cotizaciones FX
 
@@ -168,21 +179,22 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 | Item                                                            | Severidad | Descripción                                                                                                                                     |
 | --------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `inicio, carga, pasivos, tarjetas, horizonte, analisis` pero `App.tsx` usa `dashboard, cards, services`. |
-| `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                               |
 | Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.                  |
-| `useServices.ts` usando Firestore                               | Alta      | Genera errores en consola (`FirebaseError: index required`). Debe migrarse a PostgREST (`/movimientos_previstos_mes`).                          |
-| `useBudgets.ts` usando Firestore                                | Media     | Hook secundario todavía en Firestore. Debe migrarse a `/presupuestos_definicion`.                                                               |
-| Certificado self-signed en PostgREST                            | Media     | Browsers rechazan el cert (`ERR_CERT_AUTHORITY_INVALID`). Requiere cert válido (Let's Encrypt u otro) o aceptación manual por dispositivo.      |
+| Certificado self-signed en PostgREST                            | Media     | Browsers requieren aceptar excepción manual por dispositivo (`ERR_CERT_AUTHORITY_INVALID`). Requiere cert válido (Let's Encrypt u otro).        |
+| `saldo` en `medios_pago` son todos 0                            | Baja      | Las columnas `saldo`, `saldo_inicial`, `moneda` fueron agregadas pero no tienen datos reales. Necesitan carga inicial.                          |
+| Cálculo `spent` en presupuestos sin filtro de mes              | Baja      | El cálculo de gasto acumulado es client-side y no filtra por mes actual. Corrección necesaria antes de que el dato sea confiable para Agos.     |
+| Flujo PENDING → PAGADO en servicios no implementado            | Media     | `ServicesView.tsx` muestra el checklist pero no tiene la acción de marcar como pagado (actualizar `movimientos_previstos_mes` + crear `movimiento`). |
 
 ---
 
 ## Próximos Pasos (accionables)
 
-1. **Migrar `useServices.ts`** de Firestore a PostgREST — desbloquea `ServicesView.tsx` y elimina errores en consola.
-2. **Migrar `useBudgets.ts`** de Firestore a PostgREST.
-3. **Eliminar `config/firebase.ts`** una vez que los hooks anteriores estén migrados.
-4. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta.
-5. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Desbloqueador de la regla 3 taps para Agos.
+1. **Resolver certificado TLS** — obtener cert válido (Let's Encrypt vía Coolify/Traefik) para eliminar la fricción de aceptación manual por dispositivo. Bloquea el onboarding de Agos en su teléfono.
+2. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta. Entrada a Phase 2.
+3. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Desbloqueador de la regla 3 taps para Agos.
+4. **Cargar saldos iniciales** en `medios_pago` — las columnas existen pero los valores son 0.
+5. **Corregir cálculo `spent`** en `usePresupuestos.ts` — agregar filtro por mes actual para que el dato sea confiable.
+6. **Flujo PENDING → PAGADO** en `ServicesView.tsx` — acción de marcar servicio como pagado.
 
 ---
 
@@ -190,10 +202,10 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 | Riesgo                                                                            | Probabilidad | Impacto | Mitigación                                                                               |
 | --------------------------------------------------------------------------------- | ------------ | ------- | ---------------------------------------------------------------------------------------- |
-| Migration `001_finanzas_rearchitecture.sql` sin ejecutar en VPS bloquea flujo E2E | Alta         | Alto    | Ejecutar como primer paso tras mergear el worktree                                       |
-| `VITE_API_URL` no configurada en entorno de desarrollo                            | Media        | Alto    | Verificar `.env.local` antes de arrancar Phase 1                                         |
+| Certificado self-signed bloquea onboarding de Agos en su teléfono                | Alta         | Alto    | Resolver cert válido (Let's Encrypt via Coolify) antes de invitar a Agos a usar la app  |
+| `saldo` en `medios_pago` = 0 muestra datos incorrectos en Dashboard               | Media        | Medio   | Cargar saldos iniciales reales antes de mostrar la app a Agos                            |
 | Motor IA (spec §9) requiere diseño adicional                                      | Media        | Medio   | Definir con Mauro el approach (LLM externo, regex local, o híbrido) antes de implementar |
-| Flujo "3 taps" para Agos requiere UX testing real                                 | Baja         | Alto    | Validar con Agos en dispositivo real antes de dar Phase 1 por cerrada                    |
+| Flujo "3 taps" para Agos requiere UX testing real                                 | Baja         | Alto    | Validar con Agos en dispositivo real; defaults "último usado" aún no implementados       |
 
 ---
 

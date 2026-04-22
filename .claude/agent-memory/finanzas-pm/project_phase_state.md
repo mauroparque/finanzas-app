@@ -1,30 +1,49 @@
 ---
 name: Estado de fases — Finanzas 2.0
-description: Estado actualizado de fases, worktree activo y deuda técnica resuelta (2026-04-20)
+description: Estado actualizado de fases y deuda técnica activa tras cierre de Phase 1 (2026-04-22)
 type: project
 ---
 
-Phase 0 cerrada (2026-04-11). Entregables reales: `types/index.ts`, `classificationMap.ts`, `api.ts` (PostgREST), `001_finanzas_rearchitecture.sql` (173 líneas). El proyecto NO usa Zustand — los stores `transactionStore.ts` / `uiStore.ts` que Phase 0 mencionaba fueron eliminados en `feat/phase1-foundation`. La migration registrada originalmente como "002" es en realidad `001_finanzas_rearchitecture.sql`.
+Phase 0 cerrada (2026-04-11). Phase 1 cerrada (2026-04-22).
 
-**Why:** El commit de refactor Phase 0 en main (f2f7d32) mencionaba Zustand y migration 002, pero el worktree lo corrigió.
+El proyecto NO usa Zustand. La arquitectura es React hooks → api.ts → PostgREST → PostgreSQL.
 
-**How to apply:** No mencionar Zustand como parte del stack. La arquitectura es React hooks → api.ts → PostgREST → PostgreSQL.
+**Why:** El commit de refactor Phase 0 en main (f2f7d32) mencionaba Zustand y migration 002, pero el worktree lo corrigió. Phase 1 completó la migración total de Firestore a PostgREST.
+
+**How to apply:** No mencionar Zustand como parte del stack. Firebase es exclusivamente hosting estático.
 
 ---
 
-Worktree activo: `feat/phase1-foundation` (`.worktrees/feat-phase1-foundation`, HEAD `e80beef`). Contiene 3 commits no mergeados a main:
+## Hitos de Phase 1 (cerrada 2026-04-22)
 
-1. `4d1f38d` — Tailwind v3 + tokens Editorial Orgánico (`tailwind.config.js`, `postcss.config.js`, `src/index.css`)
-2. `3c1a3ea` — PostgREST client (`api.ts`) + tipos snake_case + migration SQL
-3. `e80beef` — Hooks migrados: `useTransactions.ts` a PostgREST, `useMediosPago.ts` nuevo (reemplaza `useAccounts.ts`), `TransactionForm.tsx` y `Dashboard.tsx` actualizados
+- `feat/phase1-foundation` mergeada a `main` (`e087778`)
+- Tailscale instalado en VPS, hostname `n8n.tail089052.ts.net`
+- PostgREST desplegado en Coolify (Docker, red `coolify`, Traefik TLS terminator)
+- `PGRST_DB_URI` corregido → apunta a `finanzas_app` (no `postgres`)
+- Rol `web_anon` creado en PostgreSQL + GRANTs a todas las tablas
+- `VITE_API_URL` configurado y funcional
+- `useServicios.ts` creado (reemplaza `useServices.ts` de Firestore)
+- `usePresupuestos.ts` creado (reemplaza `useBudgets.ts` de Firestore)
+- `ServicesView.tsx` y `Dashboard.tsx` migrados a PostgREST
+- `useServices.ts`, `useBudgets.ts`, `config/firebase.ts` eliminados
+- Migrations adicionales ejecutadas: `RENAME fecha_operation → fecha_operacion`; columnas `saldo`, `moneda`, `saldo_inicial` en `medios_pago`
+- App en producción (`https://lince-finanzas-app.web.app/`) con cero errores de consola
 
-**Deuda técnica resuelta en worktree (ya NO pendiente):**
-- `useTransactions.ts` importaba Firebase — resuelto en `e80beef`
-- `useAccounts.ts` no migrado — reemplazado por `useMediosPago.ts` en `e80beef`
+---
 
-**Próximos desbloqueadores críticos (al 2026-04-20):**
-1. Mergear `feat/phase1-foundation` a `main`
-2. Ejecutar `001_finanzas_rearchitecture.sql` en VPS
-3. Configurar `VITE_API_URL` en `.env.local`
-4. Alinear `App.tsx`: Screen type + quitar dark/neon + aplicar Editorial Orgánico
-5. Implementar defaults "último usado" en TransactionForm (regla 3 taps para Agos)
+## Deuda técnica activa (al 2026-04-22)
+
+1. **Certificado TLS self-signed** — browsers requieren excepción manual por dispositivo. Bloquea onboarding de Agos.
+2. **`saldo` en `medios_pago` = 0** — columnas existen pero necesitan datos reales.
+3. **Cálculo `spent` en presupuestos** — client-side sin filtro de mes actual.
+4. **Flujo PENDING → PAGADO** en `ServicesView.tsx` — no implementado.
+
+---
+
+## Próxima fase
+
+Phase 2 — Rediseño UI Editorial Orgánico:
+- `App.tsx`: quitar dark/neon, aplicar `bg-stone-50`, unificar Screen type
+- Dashboard: resumen por Macro, widget FX (CriptoYa)
+- Layout responsive: BottomNav mobile / Sidebar desktop
+- Defaults "último usado" en `TransactionForm.tsx` (desbloqueador regla 3 taps)

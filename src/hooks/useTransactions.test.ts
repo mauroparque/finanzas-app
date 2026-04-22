@@ -28,6 +28,19 @@ const mockMovimiento = (overrides: Partial<Movimiento> = {}): Movimiento => ({
   ...overrides,
 });
 
+const defaultTransactionInput = {
+  tipo: 'gasto' as const,
+  monto: 1000,
+  moneda: 'ARS' as const,
+  unidad: 'HOGAR' as const,
+  categoria: 'Vivienda y Vida Diaria',
+  concepto: 'Abastecimiento',
+  detalle: 'Supermercado',
+  fecha_operacion: '2026-04-01T10:00:00Z',
+  medio_pago: 'MercadoPago',
+  fuente: 'manual' as const,
+};
+
 describe('useTransactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -157,22 +170,9 @@ describe('useTransactions', () => {
       const { result } = renderHook(() => useTransactions());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      const input = {
-        tipo: 'gasto' as const,
-        monto: 1000,
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Abastecimiento',
-        detalle: 'Supermercado',
-        fecha_operacion: '2026-04-01T10:00:00Z',
-        medio_pago: 'MercadoPago',
-        fuente: 'manual' as const,
-      };
+      await result.current.addTransaction(defaultTransactionInput);
 
-      await result.current.addTransaction(input);
-
-      expect(apiPost).toHaveBeenCalledWith('/movimientos', input);
+      expect(apiPost).toHaveBeenCalledWith('/movimientos', defaultTransactionInput);
     });
 
     it('prepends new transaction to local state', async () => {
@@ -184,20 +184,7 @@ describe('useTransactions', () => {
       const { result } = renderHook(() => useTransactions());
       await waitFor(() => expect(result.current.transactions).toHaveLength(1));
 
-      const input = {
-        tipo: 'gasto' as const,
-        monto: 1000,
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Abastecimiento',
-        detalle: 'Supermercado',
-        fecha_operacion: '2026-04-01T10:00:00Z',
-        medio_pago: 'MercadoPago',
-        fuente: 'manual' as const,
-      };
-
-      await result.current.addTransaction(input);
+      await result.current.addTransaction(defaultTransactionInput);
 
       await waitFor(() => {
         expect(result.current.transactions).toHaveLength(2);
@@ -296,20 +283,7 @@ describe('useTransactions', () => {
       const { result } = renderHook(() => useTransactions());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      const input = {
-        tipo: 'gasto' as const,
-        monto: 1000,
-        moneda: 'ARS' as const,
-        unidad: 'HOGAR' as const,
-        categoria: 'Vivienda y Vida Diaria',
-        concepto: 'Abastecimiento',
-        detalle: 'Supermercado',
-        fecha_operacion: '2026-04-01T10:00:00Z',
-        medio_pago: 'MercadoPago',
-        fuente: 'manual' as const,
-      };
-
-      await expect(result.current.addTransaction(input)).rejects.toThrow('Insert failed');
+      await expect(result.current.addTransaction(defaultTransactionInput)).rejects.toThrow('Insert failed');
     });
 
     it('throws error when deleteTransaction fails', async () => {
@@ -321,6 +295,17 @@ describe('useTransactions', () => {
       await waitFor(() => expect(result.current.transactions).toHaveLength(1));
 
       await expect(result.current.deleteTransaction(1)).rejects.toThrow('Delete failed');
+    });
+
+    it('throws error when updateTransaction fails', async () => {
+      const existing = mockMovimiento({ id: 1 });
+      vi.mocked(apiGet).mockResolvedValue([existing]);
+      vi.mocked(apiPatch).mockRejectedValue(new Error('Update failed'));
+
+      const { result } = renderHook(() => useTransactions());
+      await waitFor(() => expect(result.current.transactions).toHaveLength(1));
+
+      await expect(result.current.updateTransaction(1, { monto: 2000 })).rejects.toThrow('Update failed');
     });
   });
 });

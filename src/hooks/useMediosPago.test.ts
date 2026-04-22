@@ -282,6 +282,17 @@ describe('useMediosPago', () => {
       await expect(result.current.updateMedioPago(1, { saldo: 999 })).rejects.toThrow('Update failed');
     });
 
+    it('throws error when updateAccount fails', async () => {
+      const existing = mockMedioPago({ id: 1 });
+      vi.mocked(apiGet).mockResolvedValue([existing]);
+      vi.mocked(apiPatch).mockRejectedValue(new Error('Update failed'));
+
+      const { result } = renderHook(() => useMediosPago());
+      await waitFor(() => expect(result.current.mediosPago).toHaveLength(1));
+
+      await expect(result.current.updateAccount(1, { saldo: 999 })).rejects.toThrow('Update failed');
+    });
+
     it('does not update local state when updateMedioPago fails', async () => {
       const existing = mockMedioPago({ id: 1, saldo: 10000 });
       vi.mocked(apiGet).mockResolvedValue([existing]);
