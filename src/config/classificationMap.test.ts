@@ -49,6 +49,22 @@ describe('classificationMap helpers', () => {
     });
   });
 
+  describe('unit-to-macro mapping', () => {
+    it('maps HOGAR to VIVIR categories', () => {
+      const cats = getCategoriesForUnit('HOGAR');
+      expect(cats.length).toBeGreaterThan(0);
+      expect(cats.some(c => c.name === 'Vivienda')).toBe(true);
+    });
+    it('maps PROFESIONAL to TRABAJAR categories', () => {
+      const cats = getCategoriesForUnit('PROFESIONAL');
+      expect(cats.length).toBeGreaterThan(0);
+    });
+    it('maps BRASIL to DEBER categories', () => {
+      const cats = getCategoriesForUnit('BRASIL');
+      expect(cats.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('getConceptsForCategory', () => {
     it('returns concepts for valid macro/category pairs', () => {
       const cases = [
