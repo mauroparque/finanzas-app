@@ -1,23 +1,37 @@
-
-import React from 'react';
-import { TrendingDown, Wallet, Calendar, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Wallet, Calendar, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
 import { useMediosPago } from '../hooks/useMediosPago';
-import { useBudgets } from '../hooks/useBudgets';
-import { useServices } from '../hooks/useServices';
+import { usePresupuestos } from '../hooks/usePresupuestos';
+import { useServicios } from '../hooks/useServicios';
+import { useTransactions } from '../hooks/useTransactions';
 
 const Dashboard: React.FC = () => {
   const { accounts, loading: loadingAccounts } = useMediosPago();
-  const { budgets, loading: loadingBudgets } = useBudgets();
-  const { services, loading: loadingServices } = useServices();
+  const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
+  const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
+  const { transactions } = useTransactions({ month: new Date() });
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
 
-  const upcomingDeadlines = services
-    .filter(s => s.status !== 'PAID')
-    .sort((a, b) => a.dueDate - b.dueDate)
-    .slice(0, 3);
+  const upcomingDeadlines = useMemo(() =>
+    movimientosPrevistos
+      .filter(mp => mp.estado !== 'PAID' && mp.estado !== 'PAGADO')
+      .slice(0, 3),
+    [movimientosPrevistos]
+  );
 
-  const displayBudgets = budgets.length > 0 ? budgets : [];
+  const presupuestosConGasto = useMemo(() =>
+    presupuestos.map(p => {
+      const spent = transactions
+        .filter(t => {
+          const campo = p.tipo_objetivo === 'categoria' ? t.categoria : t.concepto;
+          return campo === p.nombre_objetivo && t.tipo === 'gasto';
+        })
+        .reduce((sum, t) => sum + parseFloat(String(t.monto)), 0);
+      return { ...p, spent };
+    }),
+    [presupuestos, transactions]
+  );
 
   const getCategoryIcon = (category: string) => {
     const c = category.toLowerCase();
@@ -37,7 +51,9 @@ const Dashboard: React.FC = () => {
       <header className="flex justify-between items-center">
         <div>
           <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-0.5">Familia Mau & Agos</p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Enero 2026</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
+          </h1>
         </div>
         <div className="w-10 h-10 bg-slate-800/50 backdrop-blur-sm rounded-full border border-slate-700 flex items-center justify-center text-indigo-400 shadow-lg">
           <Calendar size={18} strokeWidth={2.5} />
@@ -47,7 +63,6 @@ const Dashboard: React.FC = () => {
       {/* Hero Balance Card */}
       <section className="relative overflow-hidden rounded-[2rem] p-6 shadow-2xl shadow-indigo-900/30 border border-white/10 group">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800"></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
 
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-8">
@@ -93,36 +108,36 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="grid gap-3">
-          {displayBudgets.length === 0 ? (
+          {presupuestosConGasto.length === 0 ? (
             <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 text-center text-slate-500 text-sm">
               No hay presupuestos definidos.
             </div>
           ) : (
-            displayBudgets.map((b) => {
-              const percentage = Math.min((b.spent / b.limit) * 100, 100);
-              const isOver = b.spent > b.limit;
+            presupuestosConGasto.map((p) => {
+              const percentage = Math.min((p.spent / p.limite) * 100, 100);
+              const isOver = p.spent > p.limite;
+              const isNearLimit = percentage >= p.porcentaje_alerta;
               let color = 'emerald';
-
               if (isOver) color = 'rose';
-              else if (percentage > 80) color = 'amber';
+              else if (isNearLimit) color = 'amber';
 
               return (
-                <div key={b.id} className="group p-4 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-900 transition-colors">
+                <div key={p.id} className="group p-4 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:bg-slate-900 transition-colors">
                   <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-3">
                       <div className={`p-2.5 rounded-xl bg-${color}-500/10 text-${color}-400 group-hover:scale-110 transition-transform`}>
-                        {getCategoryIcon(b.target_name)}
+                        {getCategoryIcon(p.nombre_objetivo)}
                       </div>
                       <div>
-                        <span className="block font-semibold text-slate-200 text-sm">{b.target_name}</span>
+                        <span className="block font-semibold text-slate-200 text-sm">{p.nombre_objetivo}</span>
                         <span className={`text-[10px] font-bold uppercase ${isOver ? 'text-rose-400' : 'text-slate-500'}`}>
-                          {b.unit || 'GLOBAL'} • {isOver ? 'Excedido' : 'En rango'}
+                          {p.unidad || 'GLOBAL'} • {isOver ? 'Excedido' : 'En rango'}
                         </span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="block text-sm font-bold text-slate-100 tracking-tight">${b.spent.toLocaleString()}</span>
-                      <span className="text-[10px] text-slate-500 font-medium">de ${b.limit.toLocaleString()}</span>
+                      <span className="block text-sm font-bold text-slate-100 tracking-tight">${p.spent.toLocaleString()}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">de ${p.limite.toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -146,27 +161,37 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 overflow-hidden">
-          {upcomingDeadlines.length === 0 ? (
+          {loadingServicios ? (
+            <div className="p-8 text-center"><Loader2 className="animate-spin text-indigo-500 mx-auto" /></div>
+          ) : upcomingDeadlines.length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-sm">Sin vencimientos próximos</div>
           ) : (
-            upcomingDeadlines.map((v) => (
-              <div key={v.id} className="flex justify-between items-center p-4 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`w-1.5 h-1.5 rounded-full ${v.status === 'RESERVED' ? 'bg-amber-500' : 'bg-rose-500 animate-pulse'}`}></div>
-                  <div>
-                    <p className="text-slate-200 font-semibold text-sm">{v.name}</p>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase">{v.unit} • {v.concept}</p>
+            upcomingDeadlines.map((mp) => {
+              const def = servicios.find(s => s.id === mp.referencia_id);
+              const monto = mp.monto_real ?? mp.monto_estimado ?? def?.monto_estimado;
+              return (
+                <div key={mp.id} className="flex justify-between items-center p-4 border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full ${mp.estado === 'RESERVED' ? 'bg-amber-500' : 'bg-rose-500 animate-pulse'}`}></div>
+                    <div>
+                      <p className="text-slate-200 font-semibold text-sm">{mp.nombre}</p>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase">{mp.moneda}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {monto != null && (
+                      <p className="text-slate-200 font-bold text-sm tracking-tight">${monto.toLocaleString()}</p>
+                    )}
+                    {def && (
+                      <div className="flex items-center justify-end gap-1 text-slate-500">
+                        <Calendar size={10} />
+                        <p className="text-[10px] font-medium">Día {def.dia_vencimiento}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-slate-200 font-bold text-sm tracking-tight">${v.amount.toLocaleString()}</p>
-                  <div className="flex items-center justify-end gap-1 text-slate-500">
-                    <Calendar size={10} />
-                    <p className="text-[10px] font-medium">Día {v.dueDate}</p>
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
           <button className="w-full py-3 text-xs font-bold text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/5 transition-colors flex items-center justify-center gap-2">
             Ver todo el calendario <ArrowRight size={12} />
