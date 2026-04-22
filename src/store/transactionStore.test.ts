@@ -76,6 +76,12 @@ describe('useTransactionStore', () => {
       useTransactionStore.getState().updatePlan(1, { nombre: 'B' } as never);
       expect(useTransactionStore.getState().plans[0].nombre).toBe('B');
     });
+
+    it('updatePlan does not modify non-matching id', () => {
+      useTransactionStore.getState().setPlans([{ id: 1, nombre: 'A' } as never]);
+      useTransactionStore.getState().updatePlan(99, { nombre: 'B' } as never);
+      expect(useTransactionStore.getState().plans[0].nombre).toBe('A');
+    });
   });
 
   describe('cuota actions', () => {
