@@ -3,9 +3,9 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-22  
-**Estado general:** En progreso — Phase 1 en curso, infrastructure Tailscale + PostgREST configurada en VPS
+**Estado general:** En progreso — Phase 1 completada, Phase 2 (UI Redesign) iniciada en `feat/phase2-ui-redesign`
 
-> **Rama `feat/phase1-foundation` mergeada a `main`** (`e087778`). `main` está al día con el remote. La migration `001_finanzas_rearchitecture.sql` fue ejecutada en el VPS.
+> **Rama `feat/phase1-foundation` mergeada a `main`** (`e087778`). `main` está al día con el remote. La migration `001_finanzas_rearchitecture.sql` fue ejecutada en el VPS. `useServices.ts` y `useBudgets.ts` migrados a PostgREST (`aa2064c`). En curso: rediseño UI Editorial Orgánico en worktree `feat-phase2-ui`.
 
 ---
 
@@ -21,7 +21,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 Phase 0 cerrada. `feat/phase1-foundation` mergeada a `main`. La migration `001_finanzas_rearchitecture.sql` ejecutada en VPS — tablas nuevas (`servicios_definicion`, `cuotas_tarjeta`, `prestamos`, etc.) disponibles en producción. Infraestructura Tailscale + PostgREST configurada: API accesible en `https://n8n.tail089052.ts.net` (solo via tailnet). Frontend deployado en Firebase Hosting (`https://lince-finanzas-app.web.app/`) con `VITE_API_URL` apuntando al VPS.
 
-Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usando Firestore; `App.tsx` mantiene estética dark/neon; `Dashboard.tsx` y `CardsView.tsx` no usan el nuevo diseño; certificado self-signed en PostgREST es rechazado por browsers (deuda técnica).
+Phase 1 completada: todos los hooks migrados a PostgREST, migration ejecutada en VPS, Tailscale + PostgREST configurados. Phase 2 en curso en worktree `feat-phase2-ui` (rama `feat/phase2-ui-redesign`): plan de rediseño UI definido en `docs/plans/2026-04-22-phase2-ui-redesign.md`, trabajo de implementación por comenzar. Deuda técnica pendiente: `App.tsx` mantiene estética dark/neon; certificado self-signed en PostgREST es rechazado por browsers.
 
 ---
 
@@ -42,50 +42,72 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 ---
 
-### Phase 1 — Módulo Carga de Gasto + Migración de Hooks [Pendiente]
+### Phase 1 — Módulo Carga de Gasto + Migración de Hooks [Completada — 2026-04-22]
 
 **Objetivo:** Hacer funcionar el flujo completo de carga de un gasto desde la app, consumiendo el backend real. Es la primera funcionalidad que Agos puede usar.
 
 **Regla inamovible:** La carga debe completarse en 3 taps o menos desde el FAB.
 
-**Entregables completados** (en `feat/phase1-foundation`, pendiente merge):
+**Entregables completados:**
 
 - [x] Migrar `useTransactions.ts` de Firebase a `api.ts` (POST/GET `/movimientos`) — `e80beef`
 - [x] Crear `useMediosPago.ts` reemplazando `useAccounts.ts` (GET `/medios_pago`, 70 líneas) — `e80beef`
 - [x] Actualizar `TransactionForm.tsx` al nuevo esquema PostgREST — `e80beef`
 - [x] Actualizar `Dashboard.tsx` para usar `useMediosPago` — `e80beef`
-
-**Entregables pendientes:**
-
 - [x] Mergear `feat/phase1-foundation` a `main` — `e087778`
 - [x] Ejecutar `001_finanzas_rearchitecture.sql` en VPS y verificar endpoints
 - [x] Variable de entorno `VITE_API_URL` apuntando al backend real en VPS
-- [ ] Migrar `useServices.ts` de Firestore a PostgREST (`/movimientos_previstos_mes`, `/servicios_definicion`)
-- [ ] Migrar `useBudgets.ts` de Firestore a PostgREST (`/presupuestos_definicion`)
+- [x] Migrar `useServices.ts` de Firestore a PostgREST (`/movimientos_previstos_mes`, `/servicios_definicion`) — `aa2064c`
+- [x] Migrar `useBudgets.ts` de Firestore a PostgREST (`/presupuestos_definicion`) — `aa2064c`
+- [x] Alias backward-compatible en clasificación (`e316d98`)
+
+**Pendiente (trasladado a Phase 3 o posterior):**
+
 - [ ] Implementar lógica "último usado" para defaults de Macro/Categoría/Concepto/Medio de pago
 - [ ] Motor de sugerencia IA: dado monto + texto libre, sugerir clasificación (spec §9)
 
 ---
 
-### Phase 2 — Rediseño UI + App Shell [Pendiente]
+### Phase 2 — Rediseño UI + App Shell [En progreso — rama `feat/phase2-ui-redesign`]
 
-**Objetivo:** Reemplazar la estética dark/neon por el tema "Editorial Orgánico" y alinear la navegación con la spec.
+**Objetivo:** Reemplazar la estética dark/neon por el tema "Editorial Orgánico" y construir el app shell responsive. Sin cambios en lógica de datos ni hooks — fase exclusivamente de UI.
 
-**Entregables completados** (en `feat/phase1-foundation`, pendiente merge):
+**Plan de implementación:** `docs/plans/2026-04-22-phase2-ui-redesign.md`  
+**Worktree activo:** `.worktrees/feat-phase2-ui`
+
+**Entregables completados (base de Phase 1):**
 
 - [x] Tailwind v3 instalado (`tailwind.config.js` con paleta terracotta/sage/navy, `postcss.config.js`) — `4d1f38d`
 - [x] `src/index.css` con directivas Tailwind + tema base stone-50 — `4d1f38d`
 - [x] `index.html` limpio: sin CDN Tailwind, con PWA meta tags — `4d1f38d`
 
-**Entregables pendientes:**
+**Pasos del plan (en orden de dependencia):**
 
-- [ ] `App.tsx`: quitar fondo dark + blobs animados; aplicar `bg-stone-50`; actualizar FAB a terracotta
-- [ ] `App.tsx`: actualizar `Screen` type a los screens de la spec (`inicio`, `carga`, `pasivos`, `tarjetas`, `horizonte`, `analisis`) — actualmente hay desalineación con el tipo en `types/index.ts`
-- [ ] `Dashboard.tsx`: cards con diseño orgánico; resumen por Macro en tiempo real; widget FX (CriptoYa)
-- [ ] `CardsView.tsx`: renombrar/refactorizar para tarjetas + préstamos (conectar a `cuotas_tarjeta`, `prestamos`)
-- [ ] `ServicesView.tsx`: checklist mensual desde `movimientos_previstos_mes`
-- [ ] Layout responsive: BottomNav mobile / Sidebar desktop
-- [ ] Componentes UI primitivos: Button, Card, Badge, Input en `src/components/common/ui/`
+- [ ] **Paso 1 — UI Primitives** (`src/components/common/ui/`): `Card`, `Button`, `Badge`, `Input`
+- [ ] **Paso 2 — Layout**: `BottomNav.tsx` (mobile, fixed bottom) + `Sidebar.tsx` (desktop, sticky)
+- [ ] **Paso 3 — App.tsx shell**: eliminar blobs dark, aplicar `bg-stone-50`, FAB terracotta, layout responsive con BottomNav/Sidebar
+- [ ] **Paso 4 — Dashboard.tsx**: rediseño Editorial Orgánico; secciones: saldo total, Macros (VIVIR/TRABAJAR/DEBER/DISFRUTAR), presupuestos, servicios próximos
+- [ ] **Paso 5 — CardsView.tsx + hooks**: crear `useCuotasTarjeta.ts` y `usePrestamos.ts`; conectar a datos reales
+- [ ] **Paso 6 — ServicesView.tsx**: botón "Marcar pagado" funcional; flujo PENDING → PAGADO con modal de monto real
+
+**Pasos 4, 5 y 6 son independientes entre sí** — pueden ejecutarse en paralelo con subagentes.
+
+**Criterios de aceptación:**
+
+- `npm run build` pasa sin errores TypeScript
+- No quedan referencias a `bg-[#020617]`, `indigo-600`, `violet-606`, `slate-900` en `App.tsx`
+- BottomNav visible en mobile (< md); Sidebar visible en desktop (≥ md)
+- FAB es terracotta-500
+- Dashboard muestra saldo total + presupuestos con datos reales
+- CardsView no crashea aunque no haya datos en DB
+- ServicesView tiene botón "Marcar pagado" funcional
+
+**Deuda técnica que NO se aborda en Phase 2:**
+
+- Defaults "último usado" en TransactionForm (Phase 3)
+- Widget FX en Dashboard (Phase 3 — requiere `useCotizaciones`)
+- Motor IA de sugerencia (indefinido)
+- Certificado TLS válido (infra, no código)
 
 ---
 
@@ -131,16 +153,16 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 - [x] Tipos definidos (`InstallmentPlan`, `Cuota`, `InstallmentType`, `CuotaStatus`)
 - [x] Migration SQL para tablas `cuotas_tarjeta` y `prestamos` (001)
-- [ ] `useCuotasTarjeta.ts` (hook nuevo)
-- [ ] `usePrestamos.ts` (hook nuevo)
-- [ ] `CardsView.tsx` conectado a datos reales
+- [ ] `useCuotasTarjeta.ts` (hook nuevo) (Phase 2, Paso 5)
+- [ ] `usePrestamos.ts` (hook nuevo) (Phase 2, Paso 5)
+- [ ] `CardsView.tsx` conectado a datos reales (Phase 2, Paso 5)
 
 ### Servicios (checklist mensual)
 
-- [ ] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration `001_finanzas_rearchitecture.sql`)
-- [ ] `useServicios.ts` migrado a Hono
-- [ ] `ServicesView.tsx` mostrando servicios del mes desde DB
-- [ ] Flujo PENDING → PAGADO (actualiza `movimientos_previstos_mes` + crea `movimiento`)
+- [x] Tablas `servicios_definicion` y `movimientos_previstos_mes` ejecutadas en VPS (migration `001_finanzas_rearchitecture.sql`)
+- [x] `useServicios.ts` migrado a PostgREST — `aa2064c`
+- [ ] `ServicesView.tsx` mostrando servicios del mes desde DB (Phase 2, Paso 6)
+- [ ] Flujo PENDING → PAGADO (actualiza `movimientos_previstos_mes` + crea `movimiento`) (Phase 2, Paso 6)
 
 ### Dashboard
 
@@ -165,24 +187,31 @@ Lo que **no** ha migrado todavía: `useServices.ts` y `useBudgets.ts` siguen usa
 
 ## Deuda Técnica Conocida
 
-| Item                                                            | Severidad | Descripción                                                                                                                                     |
-| --------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `App.tsx` desalineado con spec                                  | Media     | Screen type en `types/index.ts` define `inicio, carga, pasivos, tarjetas, horizonte, analisis` pero `App.tsx` usa `dashboard, cards, services`. |
-| `config/firebase.ts` sin eliminar                               | Baja      | El archivo existe; `api.ts` ya lo reemplaza. Debe borrarse para evitar confusión.                                                               |
-| Estética dark/neon en `App.tsx`                                 | Media     | Fondo oscuro con blobs animados inconsistente con "Editorial Orgánico". Tailwind ya instalado; falta aplicar tema a `App.tsx`.                  |
-| `useServices.ts` usando Firestore                               | Alta      | Genera errores en consola (`FirebaseError: index required`). Debe migrarse a PostgREST (`/movimientos_previstos_mes`).                          |
-| `useBudgets.ts` usando Firestore                                | Media     | Hook secundario todavía en Firestore. Debe migrarse a `/presupuestos_definicion`.                                                               |
-| Certificado self-signed en PostgREST                            | Media     | Browsers rechazan el cert (`ERR_CERT_AUTHORITY_INVALID`). Requiere cert válido (Let's Encrypt u otro) o aceptación manual por dispositivo.      |
+| Item                                              | Severidad | Estado     | Descripción                                                                                                                                |
+| ------------------------------------------------- | --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `App.tsx` estética dark/neon                      | Media     | En Phase 2 | Fondo oscuro con blobs animados. Se elimina en Phase 2, Paso 3.                                                                            |
+| `config/firebase.ts` sin eliminar                 | Baja      | Pendiente  | El archivo existe; `api.ts` ya lo reemplaza. Borrar tras confirmar que ningún hook lo importa.                                             |
+| Certificado self-signed en PostgREST              | Media     | Pendiente  | Browsers rechazan el cert (`ERR_CERT_AUTHORITY_INVALID`). Requiere cert válido (Let's Encrypt u otro) o aceptación manual por dispositivo. |
+| Defaults "último usado" en `TransactionForm`      | Alta      | Phase 3    | Bloqueador de regla 3 taps para Agos. Trasladado de Phase 1 a Phase 3.                                                                    |
+| Filtro de mes en `usePresupuestos`                | Baja      | Phase 2-4  | Quick fix posible durante Paso 4 de Phase 2; de lo contrario en Phase 4.                                                                  |
+| ~~`useServices.ts` usando Firestore~~             | Alta      | Resuelto   | Migrado a PostgREST en `aa2064c`.                                                                                                          |
+| ~~`useBudgets.ts` usando Firestore~~              | Media     | Resuelto   | Migrado a PostgREST en `aa2064c`.                                                                                                          |
 
 ---
 
 ## Próximos Pasos (accionables)
 
-1. **Migrar `useServices.ts`** de Firestore a PostgREST — desbloquea `ServicesView.tsx` y elimina errores en consola.
-2. **Migrar `useBudgets.ts`** de Firestore a PostgREST.
-3. **Eliminar `config/firebase.ts`** una vez que los hooks anteriores estén migrados.
-4. **Alinear `App.tsx`**: unificar el tipo `Screen`, quitar estética dark/neon, aplicar `bg-stone-50` + FAB terracotta.
-5. **Implementar defaults "último usado"** en `TransactionForm.tsx`: Macro/Categoría/Concepto/Medio de pago. Desbloqueador de la regla 3 taps para Agos.
+**Ahora — Phase 2 (en progreso):**
+
+1. **Paso 1: UI Primitives** — Crear `Card`, `Button`, `Badge`, `Input` en `src/components/common/ui/`. Prerequisito para todo lo que sigue.
+2. **Paso 2: Layout** — Crear `BottomNav.tsx` y `Sidebar.tsx` con los items de navegación y estilos terracotta/stone.
+3. **Paso 3: App.tsx shell** — Eliminar blobs dark, aplicar `bg-stone-50`, integrar BottomNav/Sidebar, FAB terracotta. Build debe pasar antes de continuar.
+4. **Pasos 4, 5, 6 en paralelo** (independientes entre sí): Dashboard redesign / CardsView + hooks / ServicesView marcar-pagado.
+
+**Pendiente post-Phase 2:**
+
+5. **Eliminar `config/firebase.ts`** — limpieza post-migración.
+6. **Implementar defaults "último usado"** en `TransactionForm.tsx` — desbloqueador de la regla 3 taps para Agos (Phase 3).
 
 ---
 

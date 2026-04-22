@@ -1,30 +1,32 @@
 ---
 name: Estado de fases — Finanzas 2.0
-description: Estado actualizado de fases, worktree activo y deuda técnica resuelta (2026-04-20)
+description: Qué fases están completas, cuál está en progreso, worktree activo y stack confirmado
 type: project
 ---
 
-Phase 0 cerrada (2026-04-11). Entregables reales: `types/index.ts`, `classificationMap.ts`, `api.ts` (PostgREST), `001_finanzas_rearchitecture.sql` (173 líneas). El proyecto NO usa Zustand — los stores `transactionStore.ts` / `uiStore.ts` que Phase 0 mencionaba fueron eliminados en `feat/phase1-foundation`. La migration registrada originalmente como "002" es en realidad `001_finanzas_rearchitecture.sql`.
-
-**Why:** El commit de refactor Phase 0 en main (f2f7d32) mencionaba Zustand y migration 002, pero el worktree lo corrigió.
-
-**How to apply:** No mencionar Zustand como parte del stack. La arquitectura es React hooks → api.ts → PostgREST → PostgreSQL.
+**Stack confirmado:** React hooks → api.ts → PostgREST → PostgreSQL. El proyecto NO usa Zustand. La migration es `001_finanzas_rearchitecture.sql` (no "002").
 
 ---
 
-Worktree activo: `feat/phase1-foundation` (`.worktrees/feat-phase1-foundation`, HEAD `e80beef`). Contiene 3 commits no mergeados a main:
+Phase 0 cerrada 2026-04-11. Entregables: `types/index.ts`, `classificationMap.ts`, `api.ts` (PostgREST), `001_finanzas_rearchitecture.sql` (173 líneas).
 
-1. `4d1f38d` — Tailwind v3 + tokens Editorial Orgánico (`tailwind.config.js`, `postcss.config.js`, `src/index.css`)
-2. `3c1a3ea` — PostgREST client (`api.ts`) + tipos snake_case + migration SQL
-3. `e80beef` — Hooks migrados: `useTransactions.ts` a PostgREST, `useMediosPago.ts` nuevo (reemplaza `useAccounts.ts`), `TransactionForm.tsx` y `Dashboard.tsx` actualizados
+Phase 1 completada 2026-04-22:
+- `feat/phase1-foundation` mergeada a `main` (`e087778`)
+- Migration `001_finanzas_rearchitecture.sql` ejecutada en VPS
+- Tailscale + PostgREST configurados; `VITE_API_URL` apunta al VPS
+- `useServices.ts` y `useBudgets.ts` migrados de Firestore a PostgREST (`aa2064c`)
+- Alias backward-compatible en clasificación (`e316d98`)
 
-**Deuda técnica resuelta en worktree (ya NO pendiente):**
-- `useTransactions.ts` importaba Firebase — resuelto en `e80beef`
-- `useAccounts.ts` no migrado — reemplazado por `useMediosPago.ts` en `e80beef`
+Phase 2 en progreso desde 2026-04-22:
+- Rama: `feat/phase2-ui-redesign`
+- Worktree: `.worktrees/feat-phase2-ui`
+- Plan: `docs/plans/2026-04-22-phase2-ui-redesign.md`
+- Objetivo: reemplazar estética dark/neon por tema "Editorial Orgánico"; construir app shell responsive
+- 6 pasos: UI Primitives → Layout → App.tsx shell → Dashboard → CardsView+hooks → ServicesView
+- Pasos 4, 5 y 6 son independientes — pueden ejecutarse en paralelo con subagentes
 
-**Próximos desbloqueadores críticos (al 2026-04-20):**
-1. Mergear `feat/phase1-foundation` a `main`
-2. Ejecutar `001_finanzas_rearchitecture.sql` en VPS
-3. Configurar `VITE_API_URL` en `.env.local`
-4. Alinear `App.tsx`: Screen type + quitar dark/neon + aplicar Editorial Orgánico
-5. Implementar defaults "último usado" en TransactionForm (regla 3 taps para Agos)
+Pendiente para Phase 3: defaults "último usado" en TransactionForm (bloqueador regla 3 taps para Agos), widget FX en Dashboard, `useCotizaciones`.
+
+**Why:** Phase 1 completó toda la migración de datos; Phase 2 es puramente UI sin cambios en hooks ni lógica de datos.
+
+**How to apply:** Al evaluar estado del proyecto, Phase 1 está cerrada. El trabajo activo es Phase 2 en worktree `feat-phase2-ui`. No hay bloqueos conocidos para iniciar implementación.
