@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { Wifi, Zap, Receipt, CheckCircle2, CircleDashed, Loader2, Plus } from 'lucide-react';
-import type { EstadoPrevisto, Moneda, Unidad } from '../types';
+import type { EstadoPrevisto, Moneda, MovimientoPrevisto, Unidad } from '../types';
 import { useServicios } from '../hooks/useServicios';
 import Modal from './common/Modal';
+import { cn } from '../utils/cn';
 
 interface ServicesViewProps {
   onBack?: () => void;
 }
 
 const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
-  const { movimientosPrevistos, servicios, loading, updateEstado, addServicio } = useServicios();
+  const { movimientosPrevistos, servicios, loading, updateEstado, addServicio, marcarComoPagado } = useServicios();
+
+  // — Add service modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // — Marcar pagado modal state
+  const [isPagarModalOpen, setIsPagarModalOpen] = useState(false);
+  const [selectedPrevisto, setSelectedPrevisto] = useState<MovimientoPrevisto | null>(null);
+  const [montoInput, setMontoInput] = useState('');
+  const [isPagando, setIsPagando] = useState(false);
+  const [pagarError, setPagarError] = useState<string | null>(null);
 
   const [newServicio, setNewServicio] = useState({
     nombre: '',
@@ -24,19 +34,64 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
     es_debito_automatico: false,
   });
 
-  const handleToggleEstado = (id: number, currentEstado: EstadoPrevisto) => {
-    let nextEstado: EstadoPrevisto = 'PENDING';
-    if (currentEstado === 'PENDING') nextEstado = 'RESERVED';
-    else if (currentEstado === 'RESERVED') nextEstado = 'PAID';
-    updateEstado(id, nextEstado);
+  const openPagarModal = (mp: MovimientoPrevisto) => {
+    setSelectedPrevisto(mp);
+    const montoDefault = mp.monto_real ?? mp.monto_estimado ?? '';
+    setMontoInput(montoDefault !== '' ? String(montoDefault) : '');
+    setPagarError(null);
+    setIsPagarModalOpen(true);
+  };
+
+  const closePagarModal = () => {
+    setIsPagarModalOpen(false);
+    setSelectedPrevisto(null);
+    setMontoInput('');
+    setPagarError(null);
+  };
+
+  const handleConfirmarPago = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPrevisto) return;
+
+    const monto = parseFloat(montoInput);
+    if (isNaN(monto) || monto <= 0) {
+      setPagarError('Ingresá un monto válido mayor a 0');
+      return;
+    }
+
+    setIsPagando(true);
+    setPagarError(null);
+    try {
+      await marcarComoPagado(selectedPrevisto.id, monto);
+      closePagarModal();
+    } catch {
+      setPagarError('Error al registrar el pago. Intentá de nuevo.');
+    } finally {
+      setIsPagando(false);
+    }
   };
 
   const getStatusInfo = (estado: EstadoPrevisto) => {
     switch (estado) {
-      case 'PENDING': return { label: 'Por Pagar', color: 'bg-slate-800', text: 'text-slate-400', border: 'border-slate-700' };
-      case 'RESERVED': return { label: 'Reservado', color: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' };
+      case 'PENDING':
+        return {
+          label: 'Por Pagar',
+          badgeClass: 'bg-stone-100 text-stone-600 border-stone-200',
+          icon: <CircleDashed size={10} />,
+        };
+      case 'RESERVED':
+        return {
+          label: 'Reservado',
+          badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+          icon: <CircleDashed size={10} />,
+        };
       case 'PAID':
-      case 'PAGADO': return { label: 'Pagado', color: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' };
+      case 'PAGADO':
+        return {
+          label: 'Pagado',
+          badgeClass: 'bg-sage-50 text-sage-700 border-sage-200',
+          icon: <CheckCircle2 size={10} />,
+        };
     }
   };
 
@@ -72,37 +127,46 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
     return aDia - bDia;
   });
 
-  if (loading) return <div className="flex justify-center items-center h-64"><Loader2 className="animate-spin text-indigo-500" /></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="animate-spin text-terracotta-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in zoom-in-95 duration-500 pb-20">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Pagos Mensuales</h1>
-          <p className="text-slate-400 text-sm font-medium">Checklist de servicios</p>
+          <h1 className="text-2xl font-bold text-stone-800 mb-1">Pagos Mensuales</h1>
+          <p className="text-stone-500 text-sm font-medium">Checklist de servicios</p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="p-2 bg-indigo-600 rounded-xl border border-indigo-500 text-white shadow-lg"
+          className="p-2 bg-terracotta-500 hover:bg-terracotta-600 rounded-xl text-white shadow-md transition-colors"
         >
           <Plus size={20} />
         </button>
       </header>
 
       {/* Monthly Progress Bar */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-3xl border border-slate-700/50 shadow-xl relative overflow-hidden">
+      <section className="bg-stone-800 p-5 rounded-3xl border border-stone-700 shadow-lg relative overflow-hidden">
         <div className="flex justify-between items-end mb-4 relative z-10">
           <div>
-            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mb-1">Progreso del Mes</p>
-            <h3 className="text-3xl font-bold text-white tracking-tight">{Math.round(progress)}% <span className="text-lg text-slate-500 font-medium">completado</span></h3>
+            <p className="text-[10px] font-bold uppercase text-stone-400 tracking-widest mb-1">Progreso del Mes</p>
+            <h3 className="text-3xl font-bold text-white tracking-tight">
+              {Math.round(progress)}%{' '}
+              <span className="text-lg text-stone-400 font-medium">completado</span>
+            </h3>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium text-slate-300">{paidCount} / {movimientosPrevistos.length}</p>
+            <p className="text-xs font-medium text-stone-300">{paidCount} / {movimientosPrevistos.length}</p>
           </div>
         </div>
-        <div className="w-full h-4 bg-slate-950 rounded-full overflow-hidden border border-white/5 relative z-10">
+        <div className="w-full h-3 bg-stone-950 rounded-full overflow-hidden border border-white/5 relative z-10">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700 ease-out"
+            className="h-full bg-terracotta-500 transition-all duration-700 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -112,9 +176,9 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
       <div className="grid gap-3">
         {sortedItems.length === 0 ? (
           <div className="text-center py-10 space-y-2">
-            <p className="text-slate-400 font-medium">No hay servicios para este mes</p>
-            <p className="text-slate-500 text-sm">El workflow n8n genera los pagos previstos a inicio de cada mes.</p>
-            <p className="text-slate-500 text-sm">Podés agregar servicios recurrentes con el botón +</p>
+            <p className="text-stone-500 font-medium">No hay servicios para este mes</p>
+            <p className="text-stone-400 text-sm">El workflow n8n genera los pagos previstos a inicio de cada mes.</p>
+            <p className="text-stone-400 text-sm">Podés agregar servicios recurrentes con el botón +</p>
           </div>
         ) : (
           sortedItems.map((mp) => {
@@ -126,27 +190,40 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
             return (
               <div
                 key={mp.id}
-                onClick={() => handleToggleEstado(mp.id, mp.estado)}
-                className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none active:scale-[0.98] relative overflow-hidden group
-                        ${isPaid ? 'bg-slate-900/30 border-slate-800/30 opacity-60' : 'bg-slate-900/80 border-slate-700 shadow-md hover:border-indigo-500/30'}`}
+                className={cn(
+                  'p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden',
+                  isPaid
+                    ? 'bg-stone-50 border-stone-200 opacity-70'
+                    : 'bg-white border-stone-200 shadow-sm hover:border-terracotta-300'
+                )}
               >
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isPaid ? 'bg-emerald-900/20 text-emerald-600/50' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'}`}>
+                    <div className={cn(
+                      'w-10 h-10 rounded-xl flex items-center justify-center transition-colors',
+                      isPaid
+                        ? 'bg-stone-100 text-stone-400'
+                        : 'bg-terracotta-50 text-terracotta-500 border border-terracotta-100'
+                    )}>
                       {def?.categoria.toLowerCase().includes('vivienda') ? <Zap size={18} /> :
                         def?.categoria.toLowerCase().includes('aliment') ? <Wifi size={18} /> :
                           <Receipt size={18} />}
                     </div>
                     <div>
-                      <p className={`font-bold text-sm transition-colors ${isPaid ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                      <p className={cn(
+                        'font-bold text-sm transition-colors',
+                        isPaid ? 'text-stone-400 line-through' : 'text-stone-800'
+                      )}>
                         {mp.nombre}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                        <span className="text-[10px] text-stone-400 font-bold uppercase tracking-tight">
                           {def ? `Día ${def.dia_vencimiento} • ` : ''}{mp.moneda}
                         </span>
                         {def?.es_debito_automatico && (
-                          <div className="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 text-[8px] font-bold rounded uppercase border border-indigo-500/20">Auto</div>
+                          <div className="px-1.5 py-0.5 bg-sage-50 text-sage-600 text-[8px] font-bold rounded uppercase border border-sage-200">
+                            Auto
+                          </div>
                         )}
                       </div>
                     </div>
@@ -154,22 +231,39 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
                   <div className="text-right">
                     {monto != null ? (
                       <>
-                        <p className={`text-base font-bold tracking-tight ${isPaid ? 'text-slate-500' : 'text-white'}`}>
-                          ${monto.toLocaleString()}
+                        <p className={cn(
+                          'text-base font-bold tracking-tight',
+                          isPaid ? 'text-stone-400' : 'text-stone-800'
+                        )}>
+                          ${monto.toLocaleString('es-AR')}
                         </p>
-                        <p className="text-[9px] text-slate-500 font-bold">{mp.moneda}</p>
+                        <p className="text-[9px] text-stone-400 font-bold">{mp.moneda}</p>
                       </>
                     ) : (
-                      <p className="text-xs text-slate-500">Sin monto</p>
+                      <p className="text-xs text-stone-400">Sin monto</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                  <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${statusInfo.border} ${statusInfo.color} ${statusInfo.text}`}>
-                    {isPaid ? <CheckCircle2 size={10} /> : <CircleDashed size={10} />}
+                <div className="flex justify-between items-center pt-2 border-t border-stone-100">
+                  {/* Status badge */}
+                  <div className={cn(
+                    'px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border flex items-center gap-1.5',
+                    statusInfo.badgeClass
+                  )}>
+                    {statusInfo.icon}
                     {statusInfo.label}
                   </div>
+
+                  {/* Action button — only for non-paid items */}
+                  {!isPaid && (
+                    <button
+                      onClick={() => openPagarModal(mp)}
+                      className="px-3 py-1.5 bg-terracotta-500 hover:bg-terracotta-600 text-white text-xs font-bold rounded-xl shadow-sm transition-colors active:scale-95"
+                    >
+                      Marcar pagado
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -177,13 +271,69 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
         )}
       </div>
 
+      {/* ── Modal: Marcar como pagado ── */}
+      <Modal
+        isOpen={isPagarModalOpen}
+        onClose={closePagarModal}
+        title={`Pagar: ${selectedPrevisto?.nombre ?? ''}`}
+      >
+        <form onSubmit={handleConfirmarPago} className="space-y-4">
+          <p className="text-stone-500 text-sm">
+            Ingresá el monto real abonado. Se creará un movimiento de gasto y el servicio quedará marcado como pagado.
+          </p>
+
+          <div>
+            <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1.5 block">
+              Monto pagado ({selectedPrevisto?.moneda ?? 'ARS'})
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-stone-800 font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-terracotta-400 focus:border-transparent"
+              placeholder="0,00"
+              value={montoInput}
+              onChange={e => setMontoInput(e.target.value)}
+              autoFocus
+              required
+            />
+          </div>
+
+          {pagarError && (
+            <p className="text-red-600 text-xs font-medium bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {pagarError}
+            </p>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={closePagarModal}
+              className="flex-1 py-3 rounded-xl border border-stone-200 text-stone-600 font-semibold text-sm hover:bg-stone-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isPagando}
+              className="flex-1 py-3 rounded-xl bg-terracotta-500 hover:bg-terracotta-600 disabled:opacity-60 text-white font-bold text-sm shadow-md transition-colors active:scale-95"
+            >
+              {isPagando ? 'Registrando...' : 'Confirmar pago'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Modal: Nuevo Servicio Recurrente ── */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Nuevo Servicio Recurrente">
-        <p className="text-slate-400 text-xs mb-4">Esto agrega una definición recurrente. El workflow n8n generará el pago mensual automáticamente.</p>
+        <p className="text-stone-500 text-xs mb-4">
+          Esto agrega una definición recurrente. El workflow n8n generará el pago mensual automáticamente.
+        </p>
         <form onSubmit={handleAddServicio} className="space-y-4">
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Nombre</label>
+            <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1 block">Nombre</label>
             <input
-              className="w-full bg-slate-800 border-slate-700 rounded-xl p-3 text-white"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-terracotta-400"
               placeholder="Ej: Netflix"
               value={newServicio.nombre}
               onChange={e => setNewServicio({ ...newServicio, nombre: e.target.value })}
@@ -192,20 +342,21 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Monto estimado</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1 block">Monto estimado</label>
               <input
                 type="number"
-                className="w-full bg-slate-800 border-slate-700 rounded-xl p-3 text-white"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-terracotta-400"
                 value={newServicio.monto_estimado}
                 onChange={e => setNewServicio({ ...newServicio, monto_estimado: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Día Vence</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1 block">Día Vence</label>
               <input
                 type="number"
-                min="1" max="31"
-                className="w-full bg-slate-800 border-slate-700 rounded-xl p-3 text-white"
+                min="1"
+                max="31"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-terracotta-400"
                 value={newServicio.dia_vencimiento}
                 onChange={e => setNewServicio({ ...newServicio, dia_vencimiento: e.target.value })}
                 required
@@ -214,9 +365,9 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Unidad</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1 block">Unidad</label>
               <select
-                className="w-full bg-slate-800 border-slate-700 rounded-xl p-3 text-white appearance-none"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-stone-800 appearance-none focus:outline-none focus:ring-2 focus:ring-terracotta-400"
                 value={newServicio.unidad}
                 onChange={e => setNewServicio({ ...newServicio, unidad: e.target.value as Unidad })}
               >
@@ -226,9 +377,9 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Moneda</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1 block">Moneda</label>
               <select
-                className="w-full bg-slate-800 border-slate-700 rounded-xl p-3 text-white appearance-none"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-stone-800 appearance-none focus:outline-none focus:ring-2 focus:ring-terracotta-400"
                 value={newServicio.moneda}
                 onChange={e => setNewServicio({ ...newServicio, moneda: e.target.value as Moneda })}
               >
@@ -239,16 +390,21 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
               </select>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+          <div className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
             <input
               type="checkbox"
               id="autopay"
               checked={newServicio.es_debito_automatico}
               onChange={e => setNewServicio({ ...newServicio, es_debito_automatico: e.target.checked })}
             />
-            <label htmlFor="autopay" className="text-xs text-slate-300 font-medium">¿Es débito automático?</label>
+            <label htmlFor="autopay" className="text-xs text-stone-600 font-medium">¿Es débito automático?</label>
           </div>
-          <button className="w-full bg-indigo-600 font-bold py-4 rounded-xl text-white shadow-xl mt-2">Crear Servicio</button>
+          <button
+            type="submit"
+            className="w-full bg-terracotta-500 hover:bg-terracotta-600 font-bold py-4 rounded-xl text-white shadow-md transition-colors mt-2"
+          >
+            Crear Servicio
+          </button>
         </form>
       </Modal>
     </div>

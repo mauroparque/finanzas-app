@@ -82,6 +82,52 @@ export const useServicios = () => {
     }
   };
 
+  const marcarComoPagado = async (id: number, monto: number) => {
+    try {
+      // Find the previsto and its service definition to get classification data
+      const previsto = movimientosPrevistos.find(mp => mp.id === id);
+      if (!previsto) throw new Error(`MovimientoPrevisto id=${id} no encontrado`);
+
+      const def = servicios.find(s => s.id === previsto.referencia_id);
+
+      // 1. Update movimientos_previstos_mes → PAGADO
+      const updated = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(
+        '/movimientos_previstos_mes',
+        { id: `eq.${id}` },
+        {
+          estado: 'PAGADO' as EstadoPrevisto,
+          monto_real: monto,
+          fecha_pago: new Date().toISOString(),
+        }
+      );
+
+      // 2. Create a real movimiento
+      await apiPost('/movimientos', {
+        tipo: 'gasto',
+        monto,
+        moneda: previsto.moneda,
+        unidad: def?.unidad ?? 'HOGAR',
+        categoria: def?.categoria ?? 'Vivienda y Vida Diaria',
+        concepto: def?.concepto ?? 'Servicios e Impuestos',
+        detalle: def?.detalle ?? previsto.nombre,
+        fecha_operacion: new Date().toISOString(),
+        medio_pago: def?.medio_pago_default ?? 'Efectivo ARS',
+        fuente: 'manual' as const,
+        notas: `Pago de servicio: ${previsto.nombre}`,
+      });
+
+      // 3. Update local state
+      if (updated.length > 0) {
+        setMovimientosPrevistos(prev =>
+          prev.map(mp => (mp.id === id ? updated[0] : mp))
+        );
+      }
+    } catch (err) {
+      console.error('Error al marcar como pagado:', err);
+      throw err;
+    }
+  };
+
   return {
     movimientosPrevistos,
     servicios,
@@ -89,6 +135,7 @@ export const useServicios = () => {
     error,
     updateEstado,
     addServicio,
+    marcarComoPagado,
     refresh: fetchAll,
   };
 };
