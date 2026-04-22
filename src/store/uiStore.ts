@@ -30,7 +30,7 @@ interface UIStore {
 
 export const useUIStore = create<UIStore>((set) => ({
     // Navigation
-    activeScreen: 'inicio',
+    activeScreen: 'dashboard',
     setActiveScreen: (screen) => set({ activeScreen: screen }),
 
     // Modals
