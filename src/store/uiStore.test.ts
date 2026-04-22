@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { useUIStore } from './uiStore';
 
 describe('useUIStore', () => {
   beforeEach(() => {
     useUIStore.setState(useUIStore.getInitialState?.() ?? {
-      activeScreen: 'inicio',
+      activeScreen: 'dashboard',
       isTransactionFormOpen: false,
       isNewPlanModalOpen: false,
       isMobile: false,
@@ -15,7 +15,7 @@ describe('useUIStore', () => {
 
   it('has correct initial state', () => {
     const state = useUIStore.getState();
-    expect(state.activeScreen).toBe('inicio');
+    expect(state.activeScreen).toBe('dashboard');
     expect(state.isTransactionFormOpen).toBe(false);
     expect(state.isNewPlanModalOpen).toBe(false);
     expect(state.selectedUnit).toBe('HOGAR');
