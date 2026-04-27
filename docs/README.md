@@ -1,6 +1,6 @@
 # docs/ — Índice de documentación
 
-**Finanzas 2.0** — Última actualización: 2026-04-20
+**Finanzas 2.0** — Última actualización: 2026-04-27
 
 ---
 
@@ -18,6 +18,7 @@
 |-----------|-------------|
 | [2026-03-08-finanzas-rearchitecture-design.md](./plans/2026-03-08-finanzas-rearchitecture-design.md) | Diseño de la rearquitectura (Firebase → PostgreSQL + PostgREST, UI Editorial Orgánico) |
 | [2026-03-08-finanzas-implementation-plan.md](./plans/2026-03-08-finanzas-implementation-plan.md) | Plan de implementación por fases (Phase 1–4), tasks, pasos y criterios de verificación |
+| [2026-04-22-phase3-editorial-organico.md](./plans/2026-04-22-phase3-editorial-organico.md) | Plan de implementación Phase 3: Editorial Orgánico UI, bugfixes, nuevos módulos (11 tasks: 3.0→3.10) |
 
 ---
 
