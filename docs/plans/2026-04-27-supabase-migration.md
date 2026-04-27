@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19 + TypeScript + Vite + Zustand 5 + Tailwind + Vitest + Supabase (PostgreSQL 15 + PostgREST + GoTrue Auth). Sin SDK de Supabase (`@supabase/supabase-js`) en esta migración — se usa `fetch` crudo extendido.
 
-**Spec de referencia:** `docs/superpowers/specs/2026-04-27-supabase-migration-design.md`
+**Spec de referencia:** `docs/spec/2026-04-27-supabase-migration-design.md`
 
 ---
 
@@ -1520,7 +1520,7 @@ Eliminar la línea de `.env.local` y `.env.production`.
 Localizar el bloque de hallazgo D1 y agregar:
 
 ```markdown
-| D1 | Certificado self-signed en PostgREST | 🔴 Alta | ✅ Resuelto 2026-MM-DD | Migrado a Supabase free tier (TLS válido nativo). PostgREST en VPS detenido. Ver `docs/superpowers/specs/2026-04-27-supabase-migration-design.md`. |
+| D1 | Certificado self-signed en PostgREST | 🔴 Alta | ✅ Resuelto 2026-MM-DD | Migrado a Supabase free tier (TLS válido nativo). PostgREST en VPS detenido. Ver `docs/spec/2026-04-27-supabase-migration-design.md`. |
 ```
 
 Y en la sección de fases:
