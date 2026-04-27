@@ -2,8 +2,8 @@
 
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
-**Última actualización:** 2026-04-22  
-**Estado general:** Phase 2 completada — UI Editorial Orgánico mergeada a `main` (PR #4)
+**Última actualización:** 2026-04-27
+**Estado general:** Phase 2 completada — UI Editorial Orgánico mergeada a `main` (PR #4 + merge local 2026-04-27). Divergencia local/remoto resuelta.
 
 > Phase 0, 1 y 2 cerradas. `main` tiene la app con tema Editorial Orgánico, app shell responsive, y flujo PENDING→PAGADO en servicios. Próximo: Phase 3 — Cotizaciones FX + Análisis + defaults "último usado".
 
@@ -94,6 +94,8 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] **Paso 5 — CardsView + hooks**: `useCuotasTarjeta.ts`, `usePrestamos.ts`, CardsView con skeletons y empty states — `dc463de`
 - [x] **Paso 6 — ServicesView**: `marcarComoPagado` (POST→PATCH con `movimiento_id`, compensating delete, fetch-by-ID fallback para defs inactivas), modal de monto, badges PENDING/PAGADO — `dc463de`
 - [x] Post-review: `@types/react@19` + `@types/react-dom@19` instalados; imports React 19 correctos; `type="button"` en nav buttons; filtros moneda/unidad en Dashboard — `02d7904`, `f5affa1`
+
+**Nota post-merge (2026-04-27):** La divergencia entre `main` local y `origin/main` fue resuelta mediante merge de `origin/main`. La historia granular de Phase 2 (8 commits) ahora forma parte del `main` local. El worktree de Phase 1 fue eliminado; Phase 2 permanece disponible como branch hasta decisión de limpieza.
 
 **Deuda técnica que NO se abordó en Phase 2:**
 
