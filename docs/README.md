@@ -18,6 +18,7 @@
 |-----------|-------------|
 | [2026-03-08-finanzas-rearchitecture-design.md](./plans/2026-03-08-finanzas-rearchitecture-design.md) | Diseño de la rearquitectura (Firebase → PostgreSQL + PostgREST, UI Editorial Orgánico) |
 | [2026-03-08-finanzas-implementation-plan.md](./plans/2026-03-08-finanzas-implementation-plan.md) | Plan de implementación por fases (Phase 1–4), tasks, pasos y criterios de verificación |
+| [2026-04-22-phase2-ui-redesign.md](./plans/2026-04-22-phase2-ui-redesign.md) | Plan detallado Phase 2: UI Primitives → Layout → App Shell → Dashboard → CardsView → ServicesView |
 
 ---
 
