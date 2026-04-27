@@ -1,4 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('../config/supabase', () => ({
+  REST_BASE: 'https://api.test.com/rest/v1',
+  AUTH_BASE: 'https://api.test.com/auth/v1',
+  SUPABASE_ANON_KEY: 'anon-key',
+}));
+
 import {
   apiGet,
   apiGetOne,
@@ -7,15 +14,19 @@ import {
   apiDelete,
 } from './api';
 import { mockFetch, mockFetch204 } from '../test/helpers';
+import { useAuthStore } from '../store/authStore';
 
 describe('PostgREST API CRUD helpers', () => {
   beforeEach(() => {
-    import.meta.env.VITE_API_URL = 'https://api.test.com';
+    import.meta.env.VITE_SUPABASE_URL = 'https://api.test.com';
+    import.meta.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
     import.meta.env.DEV = true;
+    useAuthStore.setState({ session: null, status: 'idle', error: null });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    useAuthStore.setState({ session: null, status: 'idle', error: null });
   });
 
   describe('apiGet', () => {
@@ -113,5 +124,112 @@ describe('PostgREST API CRUD helpers', () => {
       mockFetch204();
       await expect(apiDelete('/test', { id: 'eq.1' })).resolves.toBeUndefined();
     });
+  });
+});
+
+describe('auth headers', () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      session: {
+        access_token: 'jwt-1',
+        refresh_token: 'rt-1',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: { id: 'u', email: 'e' },
+      },
+      status: 'authenticated',
+      error: null,
+    });
+  });
+
+  afterEach(() => {
+    useAuthStore.setState({ session: null, status: 'idle', error: null });
+  });
+
+  it('sends apikey and Authorization Bearer on every request', async () => {
+    mockFetch([{ id: 1 }]);
+    await apiGet('/movimientos');
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].headers).toMatchObject({
+      apikey: 'anon-key',
+      Authorization: 'Bearer jwt-1',
+    });
+  });
+
+  it('omits Authorization when no session (anon access still gets apikey)', async () => {
+    useAuthStore.setState({ session: null, status: 'idle', error: null });
+    mockFetch([{ id: 1 }]);
+    await apiGet('/movimientos');
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1].headers).toMatchObject({ apikey: 'anon-key' });
+    expect(call[1].headers).not.toHaveProperty('Authorization');
+  });
+
+  it('builds URL against /rest/v1 base', async () => {
+    mockFetch([]);
+    await apiGet('/movimientos');
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0]).toContain('https://api.test.com/rest/v1/movimientos');
+  });
+});
+
+describe('401 refresh interceptor', () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      session: {
+        access_token: 'old',
+        refresh_token: 'rt',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: { id: 'u', email: 'e' },
+      },
+      status: 'authenticated', error: null,
+    });
+  });
+
+  it('refreshes token on 401 and retries the request', async () => {
+    const fresh = {
+      access_token: 'new', refresh_token: 'rt2',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: 'bearer' as const, user: { id: 'u', email: 'e' },
+    };
+    vi.spyOn(useAuthStore.getState(), 'refresh').mockImplementation(async () => {
+      useAuthStore.setState({ session: fresh, status: 'authenticated' });
+      return fresh;
+    });
+
+    let call = 0;
+    global.fetch = vi.fn().mockImplementation(() => {
+      call += 1;
+      if (call === 1) {
+        return Promise.resolve({
+          ok: false, status: 401,
+          text: () => Promise.resolve('JWT expired'),
+          json: () => Promise.resolve({}),
+        });
+      }
+      return Promise.resolve({
+        ok: true, status: 200,
+        json: () => Promise.resolve([{ id: 1 }]),
+        text: () => Promise.resolve(''),
+      });
+    }) as never;
+
+    const result = await apiGet<{ id: number }>('/movimientos');
+
+    expect(result).toEqual([{ id: 1 }]);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(2);
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls[1][1].headers.Authorization).toBe('Bearer new');
+  });
+
+  it('throws if refresh fails', async () => {
+    vi.spyOn(useAuthStore.getState(), 'refresh').mockResolvedValue(null);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false, status: 401,
+      text: () => Promise.resolve('JWT expired'),
+      json: () => Promise.resolve({}),
+    }) as never;
+
+    await expect(apiGet('/movimientos')).rejects.toThrow('401');
   });
 });
