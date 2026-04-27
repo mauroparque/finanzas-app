@@ -3,11 +3,13 @@ import { useTransactions } from '../../hooks/useTransactions';
 import { useMediosPago } from '../../hooks/useMediosPago';
 import { Check, Loader2 } from 'lucide-react';
 import {
-    CLASSIFICATION_MAP,
     getCategoriesForUnit,
     getConceptsForCategory,
     getDetailsForConcept
 } from '../../config/classificationMap';
+import { Button } from '../common/ui/Button';
+import { Input } from '../common/ui/Input';
+import { cn } from '../../utils/cn';
 
 interface TransactionFormProps {
     onSuccess: () => void;
@@ -79,20 +81,30 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
     const currencies = ['ARS', 'USD', 'USDT', 'BRL'];
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar bg-white rounded-3xl p-6">
             {/* Type Toggle */}
-            <div className="flex bg-slate-800 p-1 rounded-xl mb-4">
+            <div className="flex bg-stone-100 p-1 rounded-xl mb-4">
                 <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'expense' })}
-                    className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all ${formData.type === 'expense' ? 'bg-rose-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    className={cn(
+                        'flex-1 py-3 rounded-lg text-xs font-bold transition-all',
+                        formData.type === 'expense'
+                            ? 'bg-terracotta-500 text-white shadow-sm'
+                            : 'text-stone-500 hover:text-stone-800'
+                    )}
                 >
                     Gasto
                 </button>
                 <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'income' })}
-                    className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all ${formData.type === 'income' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    className={cn(
+                        'flex-1 py-3 rounded-lg text-xs font-bold transition-all',
+                        formData.type === 'income'
+                            ? 'bg-sage-500 text-white shadow-sm'
+                            : 'text-stone-500 hover:text-stone-800'
+                    )}
                 >
                     Ingreso
                 </button>
@@ -101,20 +113,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
             {/* Amount & Currency */}
             <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Monto</label>
-                    <input
+                    <Input
+                        label="Monto"
                         type="number"
                         required
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-4 text-xl font-bold text-white focus:outline-none focus:border-indigo-500 transition-colors"
                         placeholder="0.00"
+                        className="text-xl font-bold py-3"
                         value={formData.amount}
                         onChange={e => setFormData({ ...formData, amount: e.target.value })}
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Moneda</label>
+                    <label className="block text-sm font-medium text-stone-700 mb-1">Moneda</label>
                     <select
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-2 text-white font-bold appearance-none"
+                        className="w-full bg-white border border-stone-300 rounded-xl py-3 px-2 text-stone-800 font-bold appearance-none focus:border-terracotta-400 focus:ring-2 focus:ring-terracotta-200 focus:outline-none transition-colors"
                         value={formData.currency}
                         onChange={e => setFormData({ ...formData, currency: e.target.value as any })}
                     >
@@ -126,26 +138,30 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
             {/* Unit & Date */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Unidad</label>
+                    <label className="block text-sm font-medium text-stone-700 mb-1">Unidad</label>
                     <div className="flex gap-1">
-                        {CLASSIFICATION_MAP.map(u => (
+                        {(['HOGAR', 'PROFESIONAL', 'BRASIL'] as const).map(u => (
                             <button
-                                key={u.name}
+                                key={u}
                                 type="button"
-                                onClick={() => handleUnitChange(u.name)}
-                                className={`flex-1 py-2 rounded-lg text-[9px] font-bold transition-all border ${formData.unit === u.name ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                                onClick={() => handleUnitChange(u)}
+                                className={cn(
+                                    'flex-1 py-2 rounded-lg text-[9px] font-bold transition-all border',
+                                    formData.unit === u
+                                        ? 'bg-terracotta-500 border-terracotta-500 text-white'
+                                        : 'bg-stone-100 border-stone-200 text-stone-500'
+                                )}
                             >
-                                {u.name}
+                                {u}
                             </button>
                         ))}
                     </div>
                 </div>
                 <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fecha Op.</label>
-                    <input
+                    <Input
+                        label="Fecha Op."
                         type="date"
                         required
-                        className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none"
                         value={formData.date_operation}
                         onChange={e => setFormData({ ...formData, date_operation: e.target.value })}
                     />
@@ -154,9 +170,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
 
             {/* Category (Dynamic) */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Categoría</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1">Categoría</label>
                 <select
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-2 px-4 text-sm text-white appearance-none"
+                    className="w-full bg-white border border-stone-300 rounded-xl py-2 px-4 text-sm text-stone-800 appearance-none focus:border-terracotta-400 focus:ring-2 focus:ring-terracotta-200 focus:outline-none transition-colors"
                     value={formData.category}
                     onChange={e => handleCategoryChange(e.target.value)}
                 >
@@ -166,9 +182,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
 
             {/* Concept (Dynamic) */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Concepto</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1">Concepto</label>
                 <select
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-2 px-4 text-sm text-white appearance-none"
+                    className="w-full bg-white border border-stone-300 rounded-xl py-2 px-4 text-sm text-stone-800 appearance-none focus:border-terracotta-400 focus:ring-2 focus:ring-terracotta-200 focus:outline-none transition-colors"
                     value={formData.concept}
                     onChange={e => setFormData({ ...formData, concept: e.target.value, detail: '' })}
                 >
@@ -178,15 +194,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
 
             {/* Detail (Manual input with suggestions) */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Detalle / Comercio</label>
-                <input
+                <Input
+                    label="Detalle / Comercio"
                     type="text"
                     list="detail-suggestions"
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-2 px-4 text-sm text-white"
                     placeholder="Escribí o elegí una sugerencia..."
+                    required
                     value={formData.detail}
                     onChange={e => setFormData({ ...formData, detail: e.target.value })}
-                    required
                 />
                 <datalist id="detail-suggestions">
                     {detailSuggestions.map(d => <option key={d} value={d} />)}
@@ -195,30 +210,37 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
 
             {/* Account Selection */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cuenta de Pago</label>
+                <label className="block text-sm font-medium text-stone-700 mb-1">Cuenta de Pago</label>
                 <div className="grid grid-cols-2 gap-2">
                     {accounts.map(acc => (
                         <button
                             key={acc.id}
                             type="button"
                             onClick={() => setFormData({ ...formData, account: acc.nombre })}
-                            className={`py-2 px-3 rounded-xl border text-[10px] font-bold transition-all truncate ${formData.account === acc.nombre ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            className={cn(
+                                'py-2 px-3 rounded-2xl border text-[10px] font-bold transition-all truncate',
+                                formData.account === acc.nombre
+                                    ? 'bg-terracotta-50 border-terracotta-500 text-terracotta-700'
+                                    : 'bg-stone-50 border-stone-200 text-stone-600'
+                            )}
                         >
                             {acc.nombre}
                         </button>
                     ))}
-                    {accounts.length === 0 && <p className="text-[10px] text-slate-500 italic col-span-2">No hay cuentas...</p>}
+                    {accounts.length === 0 && <p className="text-[10px] text-stone-400 italic col-span-2">No hay cuentas...</p>}
                 </div>
             </div>
 
-            <button
+            <Button
                 type="submit"
+                variant="primary"
+                size="lg"
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 mt-2"
+                className="w-full mt-2 flex items-center justify-center gap-2"
             >
                 {loading ? <Loader2 className="animate-spin" /> : <Check size={20} />}
                 Confirmar Carga
-            </button>
+            </Button>
         </form>
     );
 };

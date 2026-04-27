@@ -6,14 +6,16 @@
  * so PostgREST returns the created/updated record.
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL as string;
-
-if (import.meta.env.DEV && !BASE_URL) {
-  console.warn(
-    '[api] VITE_API_URL is not set. ' +
-    'Create a .env.local file with VITE_API_URL=https://your-postgrest-endpoint'
-  );
-}
+const getBaseUrl = () => {
+  const url = import.meta.env.VITE_API_URL as string;
+  if (import.meta.env.DEV && !url) {
+    console.warn(
+      '[api] VITE_API_URL is not set. ' +
+      'Create a .env.local file with VITE_API_URL=https://your-postgrest-endpoint'
+    );
+  }
+  return url;
+};
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,7 +37,7 @@ async function request<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const url = new URL(`${BASE_URL}${path}`);
+  const url = new URL(`${getBaseUrl()}${path}`);
 
   if (options.params) {
     Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));

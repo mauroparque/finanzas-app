@@ -100,7 +100,7 @@ describe('usePresupuestos', () => {
     it('re-fetches when unidad changes', async () => {
       vi.mocked(apiGet).mockResolvedValue([]);
       const { result, rerender } = renderHook(({ unidad }) => usePresupuestos(unidad), {
-        initialProps: { unidad: undefined as string | undefined },
+        initialProps: { unidad: undefined as 'HOGAR' | 'PROFESIONAL' | 'BRASIL' | undefined },
       });
 
       await waitFor(() => expect(result.current.loading).toBe(false));

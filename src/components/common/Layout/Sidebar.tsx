@@ -1,4 +1,5 @@
-import { Home, CreditCard, ClipboardCheck, List, BarChart2, DollarSign } from 'lucide-react';
+import { Home, CreditCard, ClipboardCheck, TrendingUp, DollarSign, List } from 'lucide-react';
+import { type ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
 import type { Screen } from '../../../types';
 
@@ -7,58 +8,39 @@ interface SidebarProps {
   onNavigate: (screen: Screen) => void;
 }
 
-const NAV_ITEMS = [
-  { screen: 'dashboard' as Screen,    icon: Home,        label: 'Inicio'       },
-  { screen: 'movimientos' as Screen,  icon: List,        label: 'Movimientos'  },
-  { screen: 'tarjetas' as Screen,     icon: CreditCard,  label: 'Tarjetas'     },
-  { screen: 'servicios' as Screen,    icon: ClipboardCheck, label: 'Servicios' },
-  { screen: 'analisis' as Screen,     icon: BarChart2,   label: 'Análisis'     },
-  { screen: 'cotizaciones' as Screen, icon: DollarSign,  label: 'Cotizaciones' },
-] as const;
+const NAV_ITEMS: { screen: Screen; label: string; icon: ReactNode }[] = [
+  { screen: 'dashboard', label: 'Inicio', icon: <Home size={20} /> },
+  { screen: 'movimientos', label: 'Movimientos', icon: <List size={20} /> },
+  { screen: 'tarjetas', label: 'Tarjetas', icon: <CreditCard size={20} /> },
+  { screen: 'servicios', label: 'Servicios', icon: <ClipboardCheck size={20} /> },
+  { screen: 'cotizaciones', label: 'Cotizaciones', icon: <DollarSign size={20} /> },
+  { screen: 'analisis', label: 'Análisis', icon: <TrendingUp size={20} /> },
+];
 
-export const Sidebar = ({ activeScreen, onNavigate }: SidebarProps) => {
+export function Sidebar({ activeScreen, onNavigate }: SidebarProps) {
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white border-r border-stone-200 h-screen sticky top-0 shrink-0">
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-stone-100">
-        <span className="font-serif text-xl font-semibold text-terracotta-500 tracking-tight">
-          Finanzas
-        </span>
-        <p className="text-xs text-stone-400 mt-0.5">Mau & Agos</p>
+    <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 bg-white border-r border-stone-200">
+      <div className="p-6">
+        <h1 className="font-serif text-xl text-navy-800">Finanzas</h1>
+        <p className="text-sm text-stone-400 mt-1">Mau & Agos</p>
       </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
-        {NAV_ITEMS.map(({ screen, icon: Icon, label }) => {
-          const isActive = activeScreen === screen;
-          return (
-            <button
-              key={screen}
-              type="button"
-              onClick={() => onNavigate(screen)}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium',
-                'transition-colors duration-150 text-left',
-                isActive
-                  ? 'bg-terracotta-50 text-terracotta-700'
-                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
-              )}
-            >
-              <Icon
-                size={18}
-                strokeWidth={isActive ? 2 : 1.5}
-                className={isActive ? 'text-terracotta-500' : 'text-stone-400'}
-              />
-              {label}
-            </button>
-          );
-        })}
+      <nav className="flex-1 px-3 space-y-1">
+        {NAV_ITEMS.map(({ screen, label, icon }) => (
+          <button
+            key={screen}
+            onClick={() => onNavigate(screen)}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150',
+              activeScreen === screen
+                ? 'bg-terracotta-50 text-terracotta-700'
+                : 'text-stone-600 hover:bg-stone-50 hover:text-stone-800',
+            )}
+          >
+            {icon}
+            {label}
+          </button>
+        ))}
       </nav>
-
-      {/* Footer */}
-      <div className="px-6 py-4 border-t border-stone-100">
-        <p className="text-xs text-stone-300 font-mono">v2.0</p>
-      </div>
     </aside>
   );
-};
+}

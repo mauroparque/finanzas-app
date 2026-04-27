@@ -70,6 +70,52 @@ export const useServicios = () => {
     }
   };
 
+  const markAsPaid = async (
+    previstoId: number,
+    servicioDef: ServicioDefinicion,
+    medioPagoNombre: string
+  ) => {
+    try {
+      const previsto = movimientosPrevistos.find(mp => mp.id === previstoId);
+      if (!previsto) {
+        throw new Error('Movimiento previsto no encontrado');
+      }
+
+      const patchBody: Partial<MovimientoPrevisto> = {
+        estado: 'PAGADO',
+        fecha_pago: new Date().toISOString(),
+      };
+      const updatedPrevisto = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(
+        '/movimientos_previstos_mes',
+        { id: `eq.${previstoId}` },
+        patchBody
+      );
+
+      const movimientoBody: MovimientoInput = {
+        tipo: 'gasto',
+        monto: previsto.monto_real ?? previsto.monto_estimado ?? 0,
+        moneda: previsto.moneda,
+        unidad: servicioDef.unidad,
+        categoria: servicioDef.categoria,
+        concepto: servicioDef.concepto,
+        detalle: servicioDef.detalle ?? servicioDef.nombre,
+        fecha_operacion: new Date().toISOString(),
+        medio_pago: medioPagoNombre,
+        fuente: 'manual',
+      };
+      await apiPost<MovimientoInput, Movimiento>('/movimientos', movimientoBody);
+
+      if (updatedPrevisto.length > 0) {
+        setMovimientosPrevistos(prev =>
+          prev.map(mp => (mp.id === previstoId ? updatedPrevisto[0] : mp))
+        );
+      }
+    } catch (err) {
+      console.error('Error marking as paid:', err);
+      throw err;
+    }
+  };
+
   const addServicio = async (servicio: ServicioDefinicionInput) => {
     try {
       const nuevo = await apiPost<ServicioDefinicionInput, ServicioDefinicion>(
@@ -151,6 +197,7 @@ export const useServicios = () => {
     loading,
     error,
     updateEstado,
+    markAsPaid,
     addServicio,
     marcarComoPagado,
     refresh: fetchAll,

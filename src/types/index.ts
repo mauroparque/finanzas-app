@@ -23,8 +23,15 @@ export type Screen =
 
 export type Moneda = 'ARS' | 'USD' | 'USDT' | 'BRL';
 export type Unidad = 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
+export type Macro = 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
 export type TipoMovimiento = 'gasto' | 'ingreso';
 export type EstadoPrevisto = 'PENDING' | 'RESERVED' | 'PAID' | 'PAGADO';
+
+export const UNIDAD_TO_MACRO: Record<Unidad, Macro> = {
+  HOGAR: 'VIVIR',
+  PROFESIONAL: 'TRABAJAR',
+  BRASIL: 'DEBER',
+};
 
 // ────────────────────────────────────────────────────────────────────────────
 // movimientos — core financial transactions
@@ -217,86 +224,4 @@ export interface CotizacionDisplay {
   variacion?: 'up' | 'down' | 'stable';
 }
 
-// ─── Legacy aliases kept for components not yet migrated ─────────────────────
-// These will be removed incrementally as components are refactored.
 
-/** @deprecated Use Movimiento */
-export type Transaction = Movimiento;
-
-/** @deprecated Use MedioPago */
-export type Account = MedioPago;
-
-// ─── Legacy: Service/ServiceStatus/Budget (will be replaced in Phase 2) ──────
-
-/** @deprecated Legacy status enum — use EstadoPrevisto */
-export enum ServiceStatus {
-  PENDING = 'PENDING',
-  RESERVED = 'RESERVED',
-  PAID = 'PAID',
-}
-
-/** @deprecated Legacy service type — use ServicioDefinicion + MovimientoPrevisto */
-export interface Service {
-  id: string;
-  name: string;
-  amount: number;
-  currency: Moneda;
-  unit: Unidad;
-  category: string;
-  concept: string;
-  detail: string;
-  dueDate: number;
-  status: ServiceStatus;
-  account_default?: string;
-  isAutoPay: boolean;
-  last_amount?: number;
-  variation?: 'up' | 'down' | 'stable';
-  description?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** @deprecated Legacy alias */
-export type ServiceItem = Service;
-
-/** @deprecated Legacy budget type — use PresupuestoDefinicion */
-export interface Budget {
-  id: string;
-  target_type: 'category' | 'concept';
-  target_name: string;
-  limit: number;
-  currency: Moneda;
-  unit?: Unidad | 'GLOBAL';
-  spent: number;
-  alertThreshold: number;
-  period: 'monthly';
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** @deprecated Legacy UI type */
-export interface BudgetCategory {
-  name: string;
-  limit: number;
-  spent: number;
-  icon: string;
-}
-
-/** @deprecated Legacy UI type */
-export interface CreditCardItem {
-  id: string;
-  description: string;
-  currentInstallment: number;
-  totalInstallments: number;
-  amount: number;
-  category: string;
-}
-
-/** @deprecated Legacy recurring config */
-export interface RecurringConfig {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  dayOfMonth?: number;
-  nextOccurrence: string;
-  endDate?: string;
-}

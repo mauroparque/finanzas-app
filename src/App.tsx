@@ -1,84 +1,66 @@
-import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import CardsView from './components/CardsView';
 import ServicesView from './components/ServicesView';
+import MovimientosView from './components/MovimientosView';
+import CotizacionesView from './components/CotizacionesView';
+import AnalisisView from './components/AnalisisView';
 import Modal from './components/common/Modal';
 import TransactionForm from './components/transactions/TransactionForm';
 import { BottomNav } from './components/common/Layout/BottomNav';
 import { Sidebar } from './components/common/Layout/Sidebar';
-import type { Screen } from './types';
+import { useUIStore } from './store/uiStore';
 
 const App = () => {
-  const [activeScreen, setActiveScreen] = useState<Screen>('dashboard');
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const activeScreen = useUIStore(s => s.activeScreen);
+  const setActiveScreen = useUIStore(s => s.setActiveScreen);
+  const isTransactionFormOpen = useUIStore(s => s.isTransactionFormOpen);
+  const openTransactionForm = useUIStore(s => s.openTransactionForm);
+  const closeTransactionForm = useUIStore(s => s.closeTransactionForm);
 
   const renderScreen = () => {
     switch (activeScreen) {
-      case 'dashboard':    return <Dashboard />;
-      case 'tarjetas':     return <CardsView />;
-      case 'servicios':    return <ServicesView onBack={() => setActiveScreen('dashboard')} />;
-      case 'movimientos':  return <MovimientosPlaceholder />;
-      case 'cotizaciones': return <CotizacionesPlaceholder />;
-      case 'analisis':     return <AnalisisPlaceholder />;
-      default:             return <Dashboard />;
+      case 'dashboard': return <Dashboard />;
+      case 'movimientos': return <MovimientosView />;
+      case 'tarjetas': return <CardsView />;
+      case 'servicios': return <ServicesView onBack={() => setActiveScreen('dashboard')} />;
+      case 'cotizaciones': return <CotizacionesView />;
+      case 'analisis': return <AnalisisView />;
+      default: return <Dashboard />;
     }
   };
 
   return (
     <div className="flex min-h-screen bg-stone-50">
       <Sidebar activeScreen={activeScreen} onNavigate={setActiveScreen} />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 px-4 pt-6 max-w-2xl mx-auto w-full custom-scrollbar">
+      <div className="flex-1 flex flex-col md:ml-64">
+        <main className="flex-1 overflow-y-auto pb-20 md:pb-0 px-4 pt-6 max-w-2xl mx-auto w-full">
           {renderScreen()}
         </main>
-
-        <BottomNav
-          activeScreen={activeScreen}
-          onNavigate={setActiveScreen}
-          className="md:hidden"
-        />
+        <BottomNav activeScreen={activeScreen} onNavigate={setActiveScreen} />
       </div>
 
       {/* FAB */}
-      <div className="fixed bottom-20 right-5 z-50 md:bottom-8 md:right-8">
+      <div className="fixed bottom-24 right-6 z-50 md:bottom-8 md:right-8">
         <button
-          onClick={() => setIsTransactionModalOpen(true)}
-          className="w-14 h-14 bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-full shadow-lg flex items-center justify-center transition-colors duration-150 active:scale-95"
-          aria-label="Agregar movimiento"
+          onClick={openTransactionForm}
+          className="w-14 h-14 bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-90"
+          aria-label="Agregar Gasto"
         >
-          <Plus size={26} strokeWidth={2.5} />
+          <Plus size={28} strokeWidth={2.5} />
         </button>
       </div>
 
+      {/* Transaction Modal */}
       <Modal
-        isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
+        isOpen={isTransactionFormOpen}
+        onClose={closeTransactionForm}
         title="Nueva Operación"
       >
-        <TransactionForm onSuccess={() => setIsTransactionModalOpen(false)} />
+        <TransactionForm onSuccess={closeTransactionForm} />
       </Modal>
     </div>
   );
 };
-
-const MovimientosPlaceholder = () => (
-  <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-    <p className="text-sm">Movimientos — próximamente en Phase 3</p>
-  </div>
-);
-
-const CotizacionesPlaceholder = () => (
-  <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-    <p className="text-sm">Cotizaciones FX — próximamente en Phase 3</p>
-  </div>
-);
-
-const AnalisisPlaceholder = () => (
-  <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-    <p className="text-sm">Análisis — próximamente en Phase 3</p>
-  </div>
-);
 
 export default App;
