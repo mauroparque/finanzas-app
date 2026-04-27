@@ -1,89 +1,83 @@
 /**
- * PostgREST API Client
- *
- * Base URL is configured via VITE_API_URL env var.
- * All write operations use `Prefer: return=representation`
- * so PostgREST returns the created/updated record.
+ * Supabase REST (PostgREST) client.
+ * - Uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see src/config/supabase.ts).
+ * - Injects apikey + Authorization on every request.
+ * - On 401, attempts a refresh once and retries the request.
  */
 
-const getBaseUrl = () => {
-  const url = import.meta.env.VITE_API_URL as string;
-  if (import.meta.env.DEV && !url) {
-    console.warn(
-      '[api] VITE_API_URL is not set. ' +
-      'Create a .env.local file with VITE_API_URL=https://your-postgrest-endpoint'
-    );
-  }
-  return url;
-};
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import { REST_BASE, SUPABASE_ANON_KEY } from './supabase';
+import { useAuthStore } from '../store/authStore';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 interface RequestOptions {
-  /** PostgREST horizontal filter params (e.g. { activo: 'eq.true' }) */
   params?: Record<string, string>;
-  /** Request body for POST/PATCH */
   body?: unknown;
-  /** Additional headers */
   headers?: Record<string, string>;
 }
 
-// ─── Core fetch wrapper ───────────────────────────────────────────────────────
+function buildHeaders(extra?: Record<string, string>): Record<string, string> {
+  const session = useAuthStore.getState().session;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    Prefer: 'return=representation',
+    apikey: SUPABASE_ANON_KEY,
+    ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    ...extra,
+  };
+  return headers;
+}
+
+async function rawRequest<T>(
+  method: HttpMethod,
+  path: string,
+  options: RequestOptions
+): Promise<{ ok: boolean; status: number; data: T | undefined; text: string }> {
+  const url = new URL(`${REST_BASE}${path}`);
+  if (options.params) {
+    Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
+  }
+  const res = await fetch(url.toString(), {
+    method,
+    headers: buildHeaders(options.headers),
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+  if (res.status === 204) {
+    return { ok: res.ok, status: res.status, data: undefined, text: '' };
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    return { ok: false, status: res.status, data: undefined, text };
+  }
+  const data = (await res.json()) as T;
+  return { ok: true, status: res.status, data, text: '' };
+}
 
 async function request<T>(
   method: HttpMethod,
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const url = new URL(`${getBaseUrl()}${path}`);
+  let attempt = await rawRequest<T>(method, path, options);
 
-  if (options.params) {
-    Object.entries(options.params).forEach(([k, v]) => url.searchParams.set(k, v));
+  if (attempt.status === 401) {
+    const fresh = await useAuthStore.getState().refresh();
+    if (fresh) {
+      attempt = await rawRequest<T>(method, path, options);
+    }
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    // Ask PostgREST to return the affected rows
-    Prefer: 'return=representation',
-    ...options.headers,
-  };
-
-  const res = await fetch(url.toString(), {
-    method,
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`[api] ${method} ${path} → ${res.status}: ${text}`);
+  if (!attempt.ok) {
+    throw new Error(`[api] ${method} ${path} → ${attempt.status}: ${attempt.text}`);
   }
-
-  // 204 No Content (e.g. DELETE without Prefer header)
-  if (res.status === 204) return undefined as unknown as T;
-
-  return res.json() as Promise<T>;
+  return attempt.data as T;
 }
 
-// ─── Public CRUD helpers ──────────────────────────────────────────────────────
-
-/**
- * GET /table?params
- * Returns an array of records.
- */
-export async function apiGet<T>(
-  path: string,
-  params?: Record<string, string>
-): Promise<T[]> {
+export async function apiGet<T>(path: string, params?: Record<string, string>): Promise<T[]> {
   return request<T[]>('GET', path, { params });
 }
 
-/**
- * GET /table?id=eq.{id} — returns single record or null
- */
 export async function apiGetOne<T>(
   path: string,
   params?: Record<string, string>
@@ -95,21 +89,14 @@ export async function apiGetOne<T>(
   return results[0] ?? null;
 }
 
-/**
- * POST /table — creates a record, returns the created record.
- */
 export async function apiPost<TInput, TOutput = TInput>(
   path: string,
   body: TInput
 ): Promise<TOutput> {
   const result = await request<TOutput[]>('POST', path, { body });
-  // PostgREST returns array when Prefer: return=representation
-  return Array.isArray(result) ? result[0] : result;
+  return Array.isArray(result) ? result[0] : (result as TOutput);
 }
 
-/**
- * PATCH /table?filter — updates matching records, returns updated rows.
- */
 export async function apiPatch<TInput, TOutput = TInput>(
   path: string,
   params: Record<string, string>,
@@ -118,12 +105,6 @@ export async function apiPatch<TInput, TOutput = TInput>(
   return request<TOutput[]>('PATCH', path, { params, body });
 }
 
-/**
- * DELETE /table?filter — deletes matching records.
- */
-export async function apiDelete(
-  path: string,
-  params: Record<string, string>
-): Promise<void> {
+export async function apiDelete(path: string, params: Record<string, string>): Promise<void> {
   await request<void>('DELETE', path, { params });
 }
