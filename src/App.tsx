@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import CardsView from './components/CardsView';
@@ -10,6 +11,8 @@ import TransactionForm from './components/transactions/TransactionForm';
 import { BottomNav } from './components/common/Layout/BottomNav';
 import { Sidebar } from './components/common/Layout/Sidebar';
 import { useUIStore } from './store/uiStore';
+import { useAuthStore } from './store/authStore';
+import { LoginScreen } from './components/auth/LoginScreen';
 
 const App = () => {
   const activeScreen = useUIStore(s => s.activeScreen);
@@ -17,6 +20,17 @@ const App = () => {
   const isTransactionFormOpen = useUIStore(s => s.isTransactionFormOpen);
   const openTransactionForm = useUIStore(s => s.openTransactionForm);
   const closeTransactionForm = useUIStore(s => s.closeTransactionForm);
+
+  const session = useAuthStore(s => s.session);
+  const hydrate = useAuthStore(s => s.hydrate);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  if (!session) {
+    return <LoginScreen />;
+  }
 
   const renderScreen = () => {
     switch (activeScreen) {
