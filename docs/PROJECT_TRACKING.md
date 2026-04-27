@@ -3,9 +3,9 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-27  
-**Estado general:** ✅ Phase 3 completada en código — 14 commits en `feat/phase3-editorial-organico`, pendiente merge a `main`. Quedan 3 gaps de alto impacto antes del handoff a Agos.
+**Estado general:** ✅ Phase 3 mergeada a `main` — 15 commits integrados. Trabajo activo en `feat/phase4-gaps-p0` para cerrar 3 gaps de alto impacto antes del handoff a Agos.
 
-> **Branch `feat/phase3-editorial-organico`**: 14 commits por delante de `main`. TypeScript 0 errores, 116 tests pasados. Todos los tasks del plan (3.0→3.10) implementados. Ver sección "Gaps funcionales" para lo que falta.
+> **Merge:** `feat/phase3-editorial-organico` → `main` (`6d113d8`). TypeScript 0 errores, 116 tests pasados. Todos los tasks del plan (3.0→3.10) implementados. Nueva branch `feat/phase4-gaps-p0` creada para G1–G8.
 
 ---
 
@@ -19,7 +19,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 ## Estado Actual
 
-**Phase 3 implementada en código.** La app tiene tema Editorial Orgánico completo, navegación responsiva (BottomNav + Sidebar), hooks para todos los módulos, y defects resueltos (classification mapping, uiStore default, api.ts lazy-eval). Pendiente de merge a `main`.
+**Phase 3 mergeada a `main`.** La app tiene tema Editorial Orgánico completo, navegación responsiva (BottomNav + Sidebar), hooks para todos los módulos, y defects resueltos (classification mapping, uiStore default, api.ts lazy-eval). Trabajo activo en `feat/phase4-gaps-p0`.
 
 **Infraestructura operativa:** PostgREST en VPS vía Coolify/Traefik. `VITE_API_URL` configurado. Firebase Hosting para deploy estático.
 
@@ -296,7 +296,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 | Phase 1 completada | 2026-04-22 | ✅ | Migración Firestore → PostgREST completa |
 | Phase 2 completada | 2026-04-27 | ✅ | Rediseño UI Editorial Orgánico (ejecutado en Phase 3 branch) |
 | Phase 3 completada | 2026-04-27 | ✅ | Todos los tasks 3.0→3.10 implementados y con tests |
-| Merge Phase 3 → main | 2026-04-28 | ⏳ | Pendiente revisión y resolución de P0 gaps |
+| Merge Phase 3 → main | 2026-04-27 | ✅ | Completado (`6d113d8`). Branch `feat/phase4-gaps-p0` creada. |
 | Phase 4: Agregación Macro + 3 taps | 2026-04-30 | ⏳ | G1 + G2 en Dashboard y TransactionForm |
 | Phase 4: Cert TLS | 2026-04-30 | ⏳ | Requiere configuración Coolify/Traefik |
 | Phase 4: Handoff a Agos | 2026-05-02 | ⏳ | App accesible desde móvil de Agos sin fricción |
