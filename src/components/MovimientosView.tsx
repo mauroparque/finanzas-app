@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatCurrency } from '../utils/formatters';
 import { Badge } from './common/ui/Badge';
 import { Card } from './common/ui/Card';
 
 export default function MovimientosView() {
-  const { transactions, loading } = useTransactions({ month: new Date() });
+  const filters = useMemo(() => ({ month: new Date() }), []);
+  const { transactions, loading } = useTransactions(filters);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64 text-stone-400">Cargando...</div>;
