@@ -13,7 +13,8 @@ const Dashboard: React.FC = () => {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
-  const { transactions } = useTransactions({ month: new Date() });
+  const monthFilter = useMemo(() => new Date(), []);
+  const { transactions } = useTransactions({ month: monthFilter });
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
 
