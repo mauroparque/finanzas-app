@@ -16,16 +16,39 @@ interface TransactionFormProps {
     onSuccess: () => void;
 }
 
+const LAST_USED_KEY = 'finanzas-last-used';
+
+interface LastUsed {
+    unit: string;
+    category: string;
+    concept: string;
+}
+
+function getLastUsed(): LastUsed | null {
+    const raw = localStorage.getItem(LAST_USED_KEY);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw) as LastUsed;
+    } catch {
+        return null;
+    }
+}
+
+function setLastUsed(values: LastUsed) {
+    localStorage.setItem(LAST_USED_KEY, JSON.stringify(values));
+}
+
 export function TransactionForm({ onSuccess }: TransactionFormProps) {
     const { addTransaction } = useTransactions();
     const { accounts } = useMediosPago();
 
+    const lastUsed = getLastUsed();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         amount: '',
-        unit: 'HOGAR' as 'HOGAR' | 'PROFESIONAL' | 'BRASIL',
-        category: 'Vivienda',
-        concept: 'Alquiler',
+        unit: (lastUsed?.unit || 'HOGAR') as 'HOGAR' | 'PROFESIONAL' | 'BRASIL',
+        category: lastUsed?.category || 'Vivienda',
+        concept: lastUsed?.concept || 'Alquiler',
         detail: '',
         type: 'expense' as 'income' | 'expense',
         account: '',
@@ -71,6 +94,11 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                 fecha_operacion: new Date(formData.date_operation).toISOString(),
                 medio_pago: String(formData.account),
                 fuente: 'manual'
+            });
+            setLastUsed({
+                unit: formData.unit,
+                category: formData.category,
+                concept: formData.concept,
             });
             setLoading(false);
             onSuccess();
