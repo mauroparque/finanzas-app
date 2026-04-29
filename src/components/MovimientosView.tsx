@@ -5,8 +5,8 @@ import { Badge } from './common/ui/Badge';
 import { Card } from './common/ui/Card';
 
 export default function MovimientosView() {
-  const filters = useMemo(() => ({ month: new Date() }), []);
-  const { transactions, loading } = useTransactions(filters);
+  const month = useMemo(() => new Date(), []);
+  const { transactions, loading } = useTransactions({ month });
 
   if (loading) {
     return <div className="flex justify-center items-center h-64 text-stone-400">Cargando...</div>;
