@@ -17,9 +17,10 @@ const mockMovimiento = (overrides: Partial<Movimiento> = {}): Movimiento => ({
   tipo: 'gasto',
   monto: 1000,
   moneda: 'ARS',
+  macro: 'VIVIR',
   unidad: 'HOGAR',
-  categoria: 'Vivienda y Vida Diaria',
-  concepto: 'Abastecimiento',
+  categoria: 'Vivienda',
+  concepto: 'Alquiler',
   detalle: 'Supermercado',
   fecha_operacion: '2026-04-01T10:00:00Z',
   fecha_carga: '2026-04-01T10:00:00Z',
@@ -33,8 +34,8 @@ const defaultTransactionInput = {
   monto: 1000,
   moneda: 'ARS' as const,
   unidad: 'HOGAR' as const,
-  categoria: 'Vivienda y Vida Diaria',
-  concepto: 'Abastecimiento',
+  categoria: 'Vivienda',
+  concepto: 'Alquiler',
   detalle: 'Supermercado',
   fecha_operacion: '2026-04-01T10:00:00Z',
   medio_pago: 'MercadoPago',
@@ -172,7 +173,10 @@ describe('useTransactions', () => {
 
       await result.current.addTransaction(defaultTransactionInput);
 
-      expect(apiPost).toHaveBeenCalledWith('/movimientos', defaultTransactionInput);
+      expect(apiPost).toHaveBeenCalledWith('/movimientos', {
+        ...defaultTransactionInput,
+        macro: 'VIVIR',
+      });
     });
 
     it('prepends new transaction to local state', async () => {

@@ -8,6 +8,7 @@ import type {
   ServicioDefinicionInput,
   EstadoPrevisto,
 } from '../types';
+import { UNIDAD_TO_MACRO } from '../types';
 
 const getCurrentPeriodo = () => new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
@@ -83,8 +84,9 @@ export const useServicios = () => {
 
       const movimientoBody: MovimientoInput = {
         tipo: 'gasto',
-        monto: previsto.monto_real ?? previsto.monto_estimado ?? 0,
+        monto: parseFloat(String(previsto.monto_real ?? previsto.monto_estimado ?? 0)),
         moneda: previsto.moneda,
+        macro: UNIDAD_TO_MACRO[servicioDef.unidad],
         unidad: servicioDef.unidad,
         categoria: servicioDef.categoria,
         concepto: servicioDef.concepto,

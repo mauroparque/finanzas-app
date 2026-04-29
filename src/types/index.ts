@@ -44,9 +44,10 @@ export interface Movimiento {
   moneda: Moneda;
 
   // Classification hierarchy
+  macro: Macro;
   unidad: Unidad;
-  categoria: string;                 // e.g. "Vivienda y Vida Diaria"
-  concepto: string;                  // e.g. "Abastecimiento"
+  categoria: string;                 // e.g. "Vivienda"
+  concepto: string;                  // e.g. "Alquiler"
   detalle: string;                   // e.g. "Supermercado Coto"
 
   // Timeline
@@ -62,7 +63,7 @@ export interface Movimiento {
   notas?: string;
 }
 
-export type MovimientoInput = Omit<Movimiento, 'id' | 'fecha_carga'>;
+export type MovimientoInput = Omit<Movimiento, 'id' | 'fecha_carga' | 'macro'> & { macro?: Macro };
 
 // ────────────────────────────────────────────────────────────────────────────
 // medios_pago — payment accounts/methods

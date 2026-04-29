@@ -7,6 +7,7 @@ import {
     getConceptsForCategory,
     getDetailsForConcept
 } from '../../config/classificationMap';
+import { UNIDAD_TO_MACRO } from '../../types';
 import { Button } from '../common/ui/Button';
 import { Input } from '../common/ui/Input';
 import { cn } from '../../utils/cn';
@@ -62,6 +63,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                 monto: parseFloat(formData.amount),
                 tipo: formData.type === 'expense' ? 'gasto' : 'ingreso',
                 moneda: formData.currency,
+                macro: UNIDAD_TO_MACRO[formData.unit],
                 unidad: formData.unit,
                 categoria: formData.category,
                 concepto: formData.concept,

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '../config/api';
 import type { Movimiento, MovimientoInput } from '../types';
+import { UNIDAD_TO_MACRO } from '../types';
 
 export const useTransactions = (filters?: {
   categoria?: string;
@@ -58,17 +59,13 @@ export const useTransactions = (filters?: {
 
   const addTransaction = async (transaction: MovimientoInput) => {
     try {
-      // In PostgreSQL we just insert the record.
-      // Triggers or backend logic might handle balance updates, or we do it separately.
-      // Currently, PostgREST direct insert:
-      const newTx = await apiPost<MovimientoInput, Movimiento>('/movimientos', transaction);
+      const enriched = {
+        ...transaction,
+        macro: UNIDAD_TO_MACRO[transaction.unidad],
+      };
+      const newTx = await apiPost<MovimientoInput, Movimiento>('/movimientos', enriched);
       
-      // We manually update local state to reflect the addition immediately
       setTransactions(prev => [newTx, ...prev]);
-      
-      // If we also need to update medio_pago balance, we would do it here or via a DB trigger.
-      // Usually, DB triggers handle the account balance changes based on operations.
-      // We will assume the frontend only needs to refresh medio_pago or we just insert.
       
       return newTx;
     } catch (err) {
