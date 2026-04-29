@@ -1,3 +1,6 @@
+import { UNIDAD_TO_MACRO } from '../types';
+import type { Unidad } from '../types';
+
 /**
  * Mapa Maestro de Clasificación Financiera (Spec v1.0)
  *
@@ -432,12 +435,14 @@ export const getCategoriesForMacro = (macroName: string): CategoryOption[] => {
     return getMacroConfig(macroName)?.categories || [];
 };
 
-// Backward-compatible alias used by form components that still reference "unit".
-export const getCategoriesForUnit = (unitOrMacroName: string): CategoryOption[] => {
-    return getCategoriesForMacro(unitOrMacroName);
+// Maps Unidad (HOGAR/PROFESIONAL/BRASIL) to Macro names for cascading dropdowns
+export const getCategoriesForUnit = (unitOrMacroName: Unidad | string): CategoryOption[] => {
+    const macroName = UNIDAD_TO_MACRO[unitOrMacroName as Unidad] ?? unitOrMacroName;
+    return getCategoriesForMacro(macroName);
 };
 
-export const getConceptsForCategory = (macroName: string, categoryName: string): ConceptOption[] => {
+export const getConceptsForCategory = (macroNameOrUnit: string, categoryName: string): ConceptOption[] => {
+    const macroName = UNIDAD_TO_MACRO[macroNameOrUnit as Unidad] ?? macroNameOrUnit;
     const macro = getMacroConfig(macroName);
     if (!macro) return [];
     const category = macro.categories.find((c) => c.name === categoryName);
@@ -445,10 +450,11 @@ export const getConceptsForCategory = (macroName: string, categoryName: string):
 };
 
 export const getDetailsForConcept = (
-    macroName: string,
+    macroNameOrUnit: string,
     categoryName: string,
     conceptName: string
 ): string[] => {
+    const macroName = UNIDAD_TO_MACRO[macroNameOrUnit as Unidad] ?? macroNameOrUnit;
     const concepts = getConceptsForCategory(macroName, categoryName);
     const concept = concepts.find((c) => c.name === conceptName);
     return concept?.details || [];

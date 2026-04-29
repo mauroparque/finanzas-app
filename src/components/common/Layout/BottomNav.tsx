@@ -1,53 +1,50 @@
-import { Home, CreditCard, ClipboardCheck, List } from 'lucide-react';
+import { Home, CreditCard, ClipboardCheck, TrendingUp, DollarSign, List } from 'lucide-react';
+import { type ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
 import type { Screen } from '../../../types';
+
+interface NavItem {
+  screen: Screen;
+  label: string;
+  icon: ReactNode;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { screen: 'dashboard', label: 'Inicio', icon: <Home size={20} /> },
+  { screen: 'movimientos', label: 'Movimientos', icon: <List size={20} /> },
+  { screen: 'tarjetas', label: 'Tarjetas', icon: <CreditCard size={20} /> },
+  { screen: 'servicios', label: 'Servicios', icon: <ClipboardCheck size={20} /> },
+  { screen: 'cotizaciones', label: 'Cotizaciones', icon: <DollarSign size={20} /> },
+  { screen: 'analisis', label: 'Análisis', icon: <TrendingUp size={20} /> },
+];
 
 interface BottomNavProps {
   activeScreen: Screen;
   onNavigate: (screen: Screen) => void;
-  className?: string;
 }
 
-const NAV_ITEMS = [
-  { screen: 'dashboard' as Screen,   icon: Home,           label: 'Inicio'      },
-  { screen: 'tarjetas' as Screen,    icon: CreditCard,     label: 'Tarjetas'    },
-  { screen: 'servicios' as Screen,   icon: ClipboardCheck, label: 'Servicios'   },
-  { screen: 'movimientos' as Screen, icon: List,           label: 'Movimientos' },
-] as const;
-
-export const BottomNav = ({ activeScreen, onNavigate, className }: BottomNavProps) => {
+export function BottomNav({ activeScreen, onNavigate }: BottomNavProps) {
   return (
-    <nav
-      className={cn(
-        'fixed bottom-0 left-0 right-0 z-40',
-        'bg-white border-t border-stone-200',
-        'pb-safe',
-        className
-      )}
-    >
-      <div className="flex items-stretch h-16">
-        {NAV_ITEMS.map(({ screen, icon: Icon, label }) => {
-          const isActive = activeScreen === screen;
-          return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-stone-200 pb-safe md:hidden">
+      <ul className="flex justify-around items-center h-16">
+        {NAV_ITEMS.map(({ screen, label, icon }) => (
+          <li key={screen}>
             <button
-              key={screen}
-              type="button"
               onClick={() => onNavigate(screen)}
               className={cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5',
-                'transition-colors duration-150 relative',
-                isActive ? 'text-terracotta-500' : 'text-stone-400 hover:text-stone-600'
+                'flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors duration-150',
+                activeScreen === screen
+                  ? 'text-terracotta-600'
+                  : 'text-stone-400 hover:text-stone-600',
               )}
+              aria-label={label}
             >
-              <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
-              <span className="text-[10px] font-medium leading-none">{label}</span>
-              {isActive && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-terracotta-500 rounded-full" />
-              )}
+              {icon}
+              <span className="text-[10px] font-medium">{label}</span>
             </button>
-          );
-        })}
-      </div>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
-};
+}

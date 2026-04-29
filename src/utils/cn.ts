@@ -1,5 +1,3 @@
-type ClassValue = string | undefined | null | false | 0;
-
-export function cn(...classes: ClassValue[]): string {
+export function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
 }

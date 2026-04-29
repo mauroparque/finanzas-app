@@ -1,10 +1,12 @@
+import { vi } from 'vitest';
+
 export const mockFetch = (response: unknown, ok = true) => {
   global.fetch = vi.fn().mockResolvedValue({
     ok,
     status: ok ? 200 : 400,
     json: () => Promise.resolve(response),
     text: () => Promise.resolve(ok ? '' : 'Bad request'),
-  }) as ReturnType<typeof vi.fn>;
+  }) as unknown as typeof global.fetch;
 };
 
 export const mockFetch204 = () => {
@@ -13,5 +15,5 @@ export const mockFetch204 = () => {
     status: 204,
     json: () => Promise.resolve(undefined),
     text: () => Promise.resolve(''),
-  }) as ReturnType<typeof vi.fn>;
+  }) as unknown as typeof global.fetch;
 };
