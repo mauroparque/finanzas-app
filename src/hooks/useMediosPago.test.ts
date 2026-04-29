@@ -14,7 +14,7 @@ import { apiGet, apiPost, apiPatch } from '../config/api';
 const mockMedioPago = (overrides: Partial<MedioPago> = {}): MedioPago => ({
   id: 1,
   nombre: 'MercadoPago',
-  tipo: 'virtual',
+  tipo: 'Billetera Virtual',
   moneda: 'ARS',
   saldo: 10000,
   saldo_inicial: 10000,
@@ -125,7 +125,7 @@ describe('useMediosPago', () => {
 
       const input = {
         nombre: 'Nueva Cuenta',
-        tipo: 'banco' as const,
+        tipo: 'Banco' as const,
         moneda: 'ARS' as const,
         saldo: 5000,
         saldo_inicial: 5000,
@@ -148,7 +148,7 @@ describe('useMediosPago', () => {
 
       const input = {
         nombre: 'Nueva Cuenta',
-        tipo: 'banco' as const,
+        tipo: 'Banco' as const,
         moneda: 'ARS' as const,
         saldo: 5000,
         saldo_inicial: 5000,
@@ -172,7 +172,7 @@ describe('useMediosPago', () => {
 
       const input = {
         nombre: 'Cuenta Alias',
-        tipo: 'efectivo' as const,
+        tipo: 'Cash' as const,
         moneda: 'ARS' as const,
         saldo: 1000,
         saldo_inicial: 1000,
@@ -261,7 +261,7 @@ describe('useMediosPago', () => {
 
       const input = {
         nombre: 'Nueva Cuenta',
-        tipo: 'banco' as const,
+        tipo: 'Banco' as const,
         moneda: 'ARS' as const,
         saldo: 5000,
         saldo_inicial: 5000,
