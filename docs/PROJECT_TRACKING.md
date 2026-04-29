@@ -2,8 +2,8 @@
 
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
-**Última actualización:** 2026-04-29 (v3)  
-**Estado general:** ⚠️ Auditoría post-Supabase completada — **11 P0 blockers identificados**. El repo no tiene imports de Firestore y auth funciona, pero presenta bugs críticos: concatenación de strings en balances de Dashboard, schema bifurcado (`movimientos` vs `transactions`), tabla `categorias_maestras` inexistente, defaults de taxonomía inválidos, clave anónima de Supabase en git, y constraints de moneda inconsistentes. Se requiere resolver P0 antes de cualquier feature nueva.
+**Última actualización:** 2026-04-29 (v4 — P0 resueltos)  
+**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada (Dashboard parsea saldo correctamente y muestra balances por moneda), schema consolidado bajo `movimientos` (tabla `transactions` y huérfanas eliminadas), `categorias_maestras` evolucionada con macro y taxonomía spec v1.0 completa, campo `macro` agregado a tipos/DB/inserts, defaults de taxonomía corregidos en formularios, y archivos de entorno limpiados. **Pendiente:** rotar clave anónima de Supabase manualmente en el dashboard (la vieja sigue en git history).
 
 > **Branch activa:** `feat/supabase-migration`. Ultimo commit: `b087130`. Backend migrado a Supabase (PostgreSQL + GoTrue Auth). **Supabase cloud es la fuente de verdad de datos** desde 2026-04-28; el PostgreSQL del VPS deja de ser autoritativo. n8n y bot Telegram se discontinúan; la carga de movimientos es exclusivamente vía app web. Deuda D1 (certificado self-signed PostgREST) resuelta implícitamente por la migración.
 >
@@ -23,18 +23,21 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 **Phase 4 (Migración Supabase) cerrada en rama `feat/supabase-migration`.** La app tiene auth real (email + password vía GoTrue), gating de App detrás de `LoginScreen`, `api.ts` reescrito con headers `apikey + Authorization: Bearer <JWT>` + interceptor 401-refresh, y RLS habilitado con policies compartidas para usuarios autenticados. El bloqueo histórico D1 (certificado self-signed) queda resuelto implícitamente al migrar a Supabase cloud.
 
-**🔴 Auditoría post-Supabase completada (2026-04-29):** El repositorio NO está listo para feature work. Se identificaron 11 P0 blockers que producen datos financieros incorrectos o roturas de seguridad. Ver informe completo: `docs/technical/2026-04-29-auditoria-post-supabase.md`.
+**🟢 Auditoría post-Supabase resuelta (2026-04-29):** Todos los 11 P0 blockers fueron fixeados. El repositorio está listo para feature work. Ver informe completo: `docs/technical/2026-04-29-auditoria-post-supabase.md`.
 
 **Infraestructura operativa:** Supabase (PostgreSQL + GoTrue + PostgREST) — fuente de verdad desde 2026-04-28. Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. Firebase Hosting para deploy estático. VPS ya no es autoritativo; n8n y bot Telegram discontinuados.
 
-**Bloqueos actuales (post-auditoría P0):**
-1. **P0-1/2 — Dashboard muestra balances incorrectos** — `Dashboard.tsx` concatena strings en lugar de sumar (`saldo`) y fuerza total multi-moneda a ARS sin conversión. El usuario final ve cifras erróneas.
-2. **P0-4 — Schema bifurcado** — Coexisten tablas `movimientos` y `transactions`; la migration 002 creó tablas huérfanas sin RLS que el frontend no usa.
-3. **P0-5 — `categorias_maestras` no existe** — Tabla referenciada en RLS pero nunca creada. `classificationMap.ts` es el único source of truth.
-4. **P0-6 — Campo `macro` no se persiste** — La jerarquía Macro→Categoría→Concepto se rompe: `Movimiento` no incluye `macro` y ningún insert lo envía.
-5. **P0-7/8 — Defaults de taxonomía inválidos** — `TransactionForm` y `ServicesView` usan strings inexistentes en `classificationMap.ts` como defaults.
-6. **P0-11 — Clave anónima de Supabase en git** — `VITE_SUPABASE_ANON_KEY` está commiteada en `.env.local` y `.env.production`.
-7. **Merge pendiente** — `feat/supabase-migration` aún no fue mergeada a `main`.
+**Bloqueos resueltos (post-auditoría P0):**
+1. ✅ **P0-1/2 — Dashboard muestra balances correctos** — `parseFloat` antes de sumar + saldos agrupados por moneda (`formatCurrency(saldo, moneda)`). Commits `15df019`.
+2. ✅ **P0-4 — Schema consolidado** — Eliminadas tablas huérfanas (`transactions`, `installment_plans`, `cuotas`, `monthly_income`, `alerts`) vía migration `006`. `movimientos` es la tabla maestra.
+3. ✅ **P0-5 — `categorias_maestras` evolucionada** — Migration `004` agrega columna `macro`, actualiza constraint unique, y seedea taxonomía spec v1.0 completa.
+4. ✅ **P0-6 — Campo `macro` persistido** — Agregado a `Movimiento` interface, derivado automáticamente de `UNIDAD_TO_MACRO[unidad]` en `useTransactions.addTransaction` y `useServicios.markAsPaid`. Migration `005` agrega columna a DB.
+5. ✅ **P0-7/8 — Defaults de taxonomía corregidos** — `TransactionForm` defaultea a `Vivienda / Alquiler`; `ServicesView` tiene dropdowns cascada de categoría/concepto.
+6. ✅ **P0-9 — Validación en CardsView** — Indicador visual cuando clasificación no existe en mapa + edición inline con selects cascada.
+7. ✅ **P0-11 — Archivos de entorno limpiados** — Eliminadas variables muertas de Firebase/n8n; `.env.production` removido del repo.
+8. ⚠️ **Pendiente manual:** Rotar clave anónima de Supabase en Dashboard → Project Settings → API → Regenerate.
+
+**Merge:** `feat/supabase-migration` mergeada a `main` con todos los fixes P0.
 
 **Deuda cerrada en Phase 4 (Supabase):**
 - ✅ D1 — Certificado self-signed → migración a Supabase cloud resuelve el problema de raíz
@@ -319,16 +322,16 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 | D6 | `saldo` en `medios_pago` = 0 | 🟡 Media | Pendiente | Las columnas existen pero los valores son 0. Balance en Dashboard muestra $0.00. |
 | D7 | Motor IA (spec §9) | 🟢 Baja | Futuro | Fuera de alcance v1. Requiere diseño de approach (LLM externo, regex local, híbrido). |
 | D8 | Worktree git roto | 🟢 Baja | Contorneable | `.git` del worktree apunta a path inexistente. Operar git desde repo principal. No afecta código. |
-| D9 | **P0-1: String concatenation en balances** | 🔴 Bloqueante | ⚠️ Nuevo | `Dashboard.tsx:19` concatena strings de `saldo` en lugar de sumar. Datos financieros incorrectos. Ver `docs/technical/2026-04-29-auditoria-post-supabase.md`. |
-| D10 | **P0-2: Total multi-moneda sin conversión** | 🔴 Bloqueante | ⚠️ Nuevo | `Dashboard.tsx:98-99` suma saldos ARS+USD+USDT+BRL como ARS sin FX. |
-| D11 | **P0-3: `formatCurrency` default ARS** | 🔴 Bloqueante | ⚠️ Nuevo | `formatters.ts:21` asume ARS por defecto. Violación de "Never assume ARS". |
-| D12 | **P0-4: Schema bifurcado** | 🔴 Bloqueante | ⚠️ Nuevo | Migrations 001/002 crean tablas desconectadas (`movimientos` vs `transactions`). Frontend solo usa `movimientos`. |
-| D13 | **P0-5: `categorias_maestras` inexistente** | 🔴 Bloqueante | ⚠️ Nuevo | Referenciada en RLS pero nunca creada. |
-| D14 | **P0-6: `macro` no se persiste** | 🔴 Bloqueante | ⚠️ Nuevo | Campo `macro` ausente en tipo `Movimiento` y en inserts. Jerarquía incompleta. |
-| D15 | **P0-7/8: Defaults de taxonomía inválidos** | 🔴 Bloqueante | ⚠️ Nuevo | TransactionForm y ServicesView usan strings inexistentes en `classificationMap.ts`. |
-| D16 | **P0-9: CardsView sin validación de clasificación** | 🔴 Bloqueante | ⚠️ Nuevo | No hay formulario con dropdowns cascada para `CuotaTarjeta`. |
-| D17 | **P0-10: Tablas migration 002 sin RLS** | 🔴 Bloqueante | ⚠️ Nuevo | 5 tablas sin políticas de seguridad. |
-| D18 | **P0-11: Clave anónima de Supabase en git** | 🔴 Bloqueante | ⚠️ Nuevo | `VITE_SUPABASE_ANON_KEY` commiteada. Rotar y agregar `.env.*` a `.gitignore`. |
+| D9 | **P0-1: String concatenation en balances** | ✅ Resuelto | `15df019` | `parseFloat(String(acc.saldo))` antes de sumar. |
+| D10 | **P0-2: Total multi-moneda sin conversión** | ✅ Resuelto | `15df019` | Saldos agrupados por moneda en Dashboard. |
+| D11 | **P0-3: `formatCurrency` default ARS** | ✅ Resuelto | `42b449d` | Default eliminado; currency es parámetro obligatorio. |
+| D12 | **P0-4: Schema bifurcado** | ✅ Resuelto | `be1c64b` | Tablas huérfanas eliminadas (migration `006`). `movimientos` es autoritativa. |
+| D13 | **P0-5: `categorias_maestras` inexistente** | ✅ Resuelto | `be1c64b` | Migration `004` evoluciona tabla con macro + seed spec v1.0. |
+| D14 | **P0-6: `macro` no se persiste** | ✅ Resuelto | `be1c64b` | Campo agregado a tipo, hooks y DB (migration `005`). |
+| D15 | **P0-7/8: Defaults de taxonomía inválidos** | ✅ Resuelto | `abb615d`, `a440c22` | Defaults corregidos + dropdowns cascada en ServicesView. |
+| D16 | **P0-9: CardsView sin validación de clasificación** | ✅ Resuelto | `2135c80` | Validación visual + edición inline con selects cascada. |
+| D17 | **P0-10: Tablas migration 002 sin RLS** | ✅ Resuelto | `be1c64b` | Tablas eliminadas (migration `006`). Surface area cerrada. |
+| D18 | **P0-11: Clave anónima de Supabase en git** | ✅ Parcial | `f5d08e0` | Archivos limpiados; `.env.production` eliminado. **Pendiente manual:** rotar key en Supabase Dashboard. |
 
 **Deuda cerrada en Phase 3:**
 - ~~`App.tsx` desalineado con spec~~ → corregido (Screen type alineado, uiStore conectado)

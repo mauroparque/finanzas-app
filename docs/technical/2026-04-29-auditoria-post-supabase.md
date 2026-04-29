@@ -2,7 +2,7 @@
 
 > **Scope:** Repositorio finanzas-app tras merge de PR #6 (Supabase) y tres ciclos consecutivos de cambios (Phase 2 UI, Phase 3 Editorial Orgánico, migración Supabase).  
 > **Method:** Cuatro auditorías especializadas en paralelo + inspección inline de residuos + consolidación.  
-> **Status:** **REQUIERE CAMBIOS** — 11 P0 blockers identificados.
+> **Status:** **P0 RESUELTOS** — 11 blockers fixeados en código (commits `f5d08e0`..`be1c64b`) y migrations ejecutadas en Supabase (004, 005, 006).
 
 ---
 
@@ -20,7 +20,13 @@ Las secciones siguientes detallan cada hallazgo con archivo, línea, descripció
 
 ---
 
-## P0 — Bloqueantes (debe arreglarse antes de seguir)
+## P0 — Bloqueantes ✅ RESUELTOS
+
+> **Fecha de resolución:** 2026-04-29  
+> **Commits:** `f5d08e0`..`be1c64b`  
+> **Migrations ejecutadas en Supabase:** `004_update_categorias_maestras.sql`, `005_add_macro_to_movimientos.sql`, `006_drop_orphan_tables.sql`
+
+### P0-1 `Dashboard.tsx:19` — String concatenation en balance total ✅ FIXED
 
 ### P0-1 `Dashboard.tsx:19` — String concatenation en balance total
 - **Archivo:** `src/components/Dashboard.tsx:19`
