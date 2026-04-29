@@ -343,7 +343,7 @@ El agente `finanzas-reviewer` está corriendo sobre `feat/supabase-migration` en
 | ID | Item | Prioridad | Contexto |
 |----|------|-----------|---------|
 | BT-1 | **Generación mensual de `movimientos_previstos_mes`** | Media | Con n8n discontinuado, ya no hay workflow que genere los previstos al primer día de cada mes. Opciones: (a) `pg_cron` en Supabase, (b) Edge Function de Supabase disparada por schedule, (c) trigger client-side al primer login del mes. Decidir approach antes de Phase 6. |
-| BT-2 | **Actualizar CLAUDE.md** — referencias a n8n como canal de carga | Baja | CLAUDE.md menciona n8n como parte del flujo de carga (sección Overview y Domain Rules). Con n8n discontinuado, esas referencias quedan desactualizadas. Tarea de docs-update, no de código. |
+| ~~BT-2~~ | ~~Actualizar CLAUDE.md — referencias a n8n~~ | ~~Baja~~ | ✅ **Resuelto** (2026-04-29). CLAUDE.md reescrito en formato conciso. Referencias a n8n eliminadas; backlog documentado en PROJECT_TRACKING.md. |
 
 ---
 

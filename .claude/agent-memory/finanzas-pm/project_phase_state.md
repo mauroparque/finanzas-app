@@ -22,7 +22,7 @@ Phase 4 cerrada (2026-04-28) — migración a Supabase: auth real + RLS + client
 
 **Corte de datos 2026-04-28:** scripts/migrate-to-supabase.sh fue ejecutado. Supabase cloud tiene los datos reales. PostgreSQL del VPS deja de ser autoritativo.
 
-**n8n / bot Telegram discontinuados (2026-04-28):** La carga de movimientos es exclusivamente vía app web. Las referencias en CLAUDE.md están desactualizadas (backlog BT-2).
+**n8n / bot Telegram discontinuados (2026-04-28):** La carga de movimientos es exclusivamente vía app web.
 
 **Decisión de diseño DA-1 — RLS auth_all:** Acceso total a cualquier usuario autenticado. Correcto para uso familiar exclusivo (Mauro + Agos). No requiere endurecimiento.
 
@@ -34,7 +34,7 @@ Phase 4 cerrada (2026-04-28) — migración a Supabase: auth real + RLS + client
 
 **Backlog técnico nuevo:**
 - BT-1: Generación mensual de movimientos_previstos_mes — con n8n discontinuado, sin workflow automático. Opciones: pg_cron, Edge Function de Supabase, o trigger client-side al primer login.
-- BT-2: Actualizar CLAUDE.md para remover referencias a n8n como canal de carga.
+- ~~BT-2: Actualizar CLAUDE.md para remover referencias a n8n como canal de carga.~~ → Resuelto 2026-04-29.
 
 **Gaps pendientes para handoff a Agos:**
 - G1: Dashboard sin agregación por Macro (VIVIR/TRABAJAR/DEBER/DISFRUTAR) — pregunta central del producto.
