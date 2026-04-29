@@ -31,15 +31,12 @@ export const useTransactions = (filters?: {
       }
 
       if (filters?.month) {
-        // Map to first and last day of the month for PostgREST
         const year = filters.month.getFullYear();
         const month = (filters.month.getMonth() + 1).toString().padStart(2, '0');
-        const firstDay = `${year}-${month}-01T00:00:00Z`;
-
         const lastDayDate = new Date(year, filters.month.getMonth() + 1, 0);
-        const lastDay = `${year}-${month}-${lastDayDate.getDate().toString().padStart(2, '0')}T23:59:59Z`;
 
-        params['and'] = `(fecha_operacion.gte.${firstDay},fecha_operacion.lte.${lastDay})`;
+        // Use date-only strings for comparison (PostgREST interprets as local/DB midnight)
+        params['and'] = `(fecha_operacion.gte.${year}-${month}-01,fecha_operacion.lte.${year}-${month}-${lastDayDate.getDate().toString().padStart(2, '0')})`;
       }
 
       const data = await apiGet<Movimiento>('/movimientos', params);

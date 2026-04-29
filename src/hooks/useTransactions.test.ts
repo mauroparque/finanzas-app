@@ -156,8 +156,8 @@ describe('useTransactions', () => {
       await waitFor(() => {
         const call = vi.mocked(apiGet).mock.calls[0];
         const params = call[1] as Record<string, string>;
-        expect(params.and).toContain('2026-04-01T00:00:00Z');
-        expect(params.and).toContain('2026-04-30T23:59:59Z');
+        expect(params.and).toContain('2026-04-01');
+        expect(params.and).toContain('2026-04-30');
       });
     });
   });
