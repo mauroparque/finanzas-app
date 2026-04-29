@@ -4,6 +4,7 @@ import { useMediosPago } from '../hooks/useMediosPago';
 import { usePresupuestos } from '../hooks/usePresupuestos';
 import { useServicios } from '../hooks/useServicios';
 import { useTransactions } from '../hooks/useTransactions';
+import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
@@ -32,18 +33,7 @@ export function Dashboard() {
     [movimientosPrevistos]
   );
 
-  const presupuestosConGasto = useMemo(() =>
-    presupuestos.map(p => {
-      const spent = transactions
-        .filter(t => {
-          const campo = p.tipo_objetivo === 'categoria' ? t.categoria : t.concepto;
-          return campo === p.nombre_objetivo && t.tipo === 'gasto';
-        })
-        .reduce((sum, t) => sum + parseFloat(String(t.monto)), 0);
-      return { ...p, spent };
-    }),
-    [presupuestos, transactions]
-  );
+  const presupuestosConGasto = useBudgetStatus(presupuestos, transactions);
 
   const getCategoryIcon = (category: string) => {
     const c = category.toLowerCase();
@@ -162,8 +152,9 @@ export function Dashboard() {
             </Card>
           ) : (
             presupuestosConGasto.map((p) => {
-              const percentage = Math.min((p.spent / p.limite) * 100, 100);
-              const isOver = p.spent > p.limite;
+              const limite = parseFloat(String(p.limite));
+              const percentage = Math.min((p.spent / limite) * 100, 100);
+              const isOver = p.spent > limite;
               const isNearLimit = percentage >= p.porcentaje_alerta;
               let color = 'emerald';
               if (isOver) color = 'rose';
@@ -192,7 +183,7 @@ export function Dashboard() {
                         {formatCurrency(p.spent, p.moneda)}
                       </span>
                       <span className="text-[10px] text-stone-500 font-medium">
-                        de {formatCurrency(p.limite, p.moneda)}
+                        de {formatCurrency(limite, p.moneda)}
                       </span>
                     </div>
                   </div>
