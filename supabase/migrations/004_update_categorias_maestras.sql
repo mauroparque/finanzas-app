@@ -29,6 +29,9 @@ ALTER TABLE categorias_maestras
 ALTER TABLE categorias_maestras
   ALTER COLUMN macro SET NOT NULL;
 
+-- 5b. Fix serial sequence after legacy data load (IDs were inserted explicitly)
+SELECT setval(pg_get_serial_sequence('categorias_maestras', 'id'), coalesce((SELECT MAX(id) FROM categorias_maestras), 0) + 1, false);
+
 -- 6. Seed spec v1.0 taxonomy (VIVIR)
 INSERT INTO categorias_maestras (macro, unidad, categoria, concepto) VALUES
   ('VIVIR', 'HOGAR', 'Vivienda', 'Alquiler'),
