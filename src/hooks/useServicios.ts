@@ -81,16 +81,6 @@ export const useServicios = () => {
         throw new Error('Movimiento previsto no encontrado');
       }
 
-      const patchBody: Partial<MovimientoPrevisto> = {
-        estado: 'PAGADO',
-        fecha_pago: new Date().toISOString(),
-      };
-      const updatedPrevisto = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(
-        '/movimientos_previstos_mes',
-        { id: `eq.${previstoId}` },
-        patchBody
-      );
-
       const movimientoBody: MovimientoInput = {
         tipo: 'gasto',
         monto: previsto.monto_real ?? previsto.monto_estimado ?? 0,
@@ -104,6 +94,16 @@ export const useServicios = () => {
         fuente: 'manual',
       };
       await apiPost<MovimientoInput, Movimiento>('/movimientos', movimientoBody);
+
+      const patchBody: Partial<MovimientoPrevisto> = {
+        estado: 'PAGADO',
+        fecha_pago: new Date().toISOString(),
+      };
+      const updatedPrevisto = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(
+        '/movimientos_previstos_mes',
+        { id: `eq.${previstoId}` },
+        patchBody
+      );
 
       if (updatedPrevisto.length > 0) {
         setMovimientosPrevistos(prev =>
