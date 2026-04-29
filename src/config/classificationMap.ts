@@ -1,3 +1,6 @@
+import { UNIDAD_TO_MACRO } from '../types';
+import type { Unidad } from '../types';
+
 /**
  * Mapa Maestro de Clasificación Financiera (Spec v1.0)
  *
@@ -431,9 +434,6 @@ export const getMacroConfig = (macroName: string): MacroConfig | undefined => {
 export const getCategoriesForMacro = (macroName: string): CategoryOption[] => {
     return getMacroConfig(macroName)?.categories || [];
 };
-
-import { UNIDAD_TO_MACRO } from '../types';
-import type { Unidad } from '../types';
 
 // Maps Unidad (HOGAR/PROFESIONAL/BRASIL) to Macro names for cascading dropdowns
 export const getCategoriesForUnit = (unitOrMacroName: Unidad | string): CategoryOption[] => {
