@@ -3,6 +3,7 @@ import { Wifi, Zap, Receipt, CheckCircle2, CircleDashed, Loader2, Plus, CreditCa
 import type { EstadoPrevisto, Moneda, Unidad, MovimientoPrevisto, ServicioDefinicion } from '../types';
 import { useServicios } from '../hooks/useServicios';
 import { useMediosPago } from '../hooks/useMediosPago';
+import { getCategoriesForUnit, getConceptsForCategory } from '../config/classificationMap';
 import Modal from './common/Modal';
 import { Card, Badge, Input, Button } from './common/ui';
 import { formatCurrency } from '../utils/formatters';
@@ -23,8 +24,8 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
     monto_estimado: '',
     moneda: 'ARS' as Moneda,
     unidad: 'HOGAR' as Unidad,
-    categoria: 'Vivienda y Vida Diaria',
-    concepto: 'Servicios e Impuestos',
+    categoria: 'Vivienda',
+    concepto: 'Alquiler',
     detalle: '',
     dia_vencimiento: '',
     es_debito_automatico: false,
@@ -100,8 +101,8 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
       monto_estimado: '',
       moneda: 'ARS' as Moneda,
       unidad: 'HOGAR' as Unidad,
-      categoria: 'Vivienda y Vida Diaria',
-      concepto: 'Servicios e Impuestos',
+      categoria: 'Vivienda',
+      concepto: 'Alquiler',
       detalle: '',
       dia_vencimiento: '',
       es_debito_automatico: false,
@@ -310,7 +311,19 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
               <select
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
                 value={newServicio.unidad}
-                onChange={e => setNewServicio({ ...newServicio, unidad: e.target.value as Unidad })}
+                onChange={e => {
+                  const unidad = e.target.value as Unidad;
+                  const categories = getCategoriesForUnit(unidad);
+                  const firstCategory = categories[0]?.name || '';
+                  const concepts = getConceptsForCategory(unidad, firstCategory);
+                  const firstConcept = concepts[0]?.name || '';
+                  setNewServicio({
+                    ...newServicio,
+                    unidad,
+                    categoria: firstCategory,
+                    concepto: firstConcept,
+                  });
+                }}
               >
                 <option value="HOGAR">HOGAR</option>
                 <option value="PROFESIONAL">PROFESIONAL</option>
@@ -328,6 +341,37 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
                 <option value="USD">USD</option>
                 <option value="USDT">USDT</option>
                 <option value="BRL">BRL</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-stone-700 mb-1 block">Categoría</label>
+              <select
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
+                value={newServicio.categoria}
+                onChange={e => {
+                  const categoria = e.target.value;
+                  const concepts = getConceptsForCategory(newServicio.unidad, categoria);
+                  const firstConcept = concepts[0]?.name || '';
+                  setNewServicio({ ...newServicio, categoria, concepto: firstConcept });
+                }}
+              >
+                {getCategoriesForUnit(newServicio.unidad).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-stone-700 mb-1 block">Concepto</label>
+              <select
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
+                value={newServicio.concepto}
+                onChange={e => setNewServicio({ ...newServicio, concepto: e.target.value })}
+              >
+                {getConceptsForCategory(newServicio.unidad, newServicio.categoria).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
           </div>
