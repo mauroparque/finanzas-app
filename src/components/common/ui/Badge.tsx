@@ -1,10 +1,8 @@
-import { type ReactNode } from 'react';
+import { type ComponentPropsWithoutRef } from 'react';
 import { cn } from '../../../utils/cn';
 
-interface BadgeProps {
+interface BadgeProps extends ComponentPropsWithoutRef<'span'> {
   variant?: 'default' | 'terracotta' | 'sage' | 'navy' | 'warning' | 'success';
-  className?: string;
-  children?: ReactNode;
 }
 
 const variantStyles = {

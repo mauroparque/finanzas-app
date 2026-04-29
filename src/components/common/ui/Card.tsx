@@ -1,13 +1,9 @@
-import { type ReactNode, type Key } from 'react';
+import { type ComponentPropsWithoutRef } from 'react';
 import { cn } from '../../../utils/cn';
 
-interface CardProps {
-  children?: ReactNode;
+interface CardProps extends ComponentPropsWithoutRef<'div'> {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   shadow?: 'none' | 'soft' | 'card' | 'float';
-  className?: string;
-  onClick?: () => void;
-  key?: Key;
 }
 
 const shadowMap = {
