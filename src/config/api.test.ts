@@ -66,10 +66,23 @@ describe('PostgREST API CRUD helpers', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null on error', async () => {
-      mockFetch(null, false);
+    it('returns null on 404', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 404,
+        text: () => Promise.resolve('Not found'),
+        json: () => Promise.resolve({}),
+      }) as never;
       const result = await apiGetOne<{ id: number }>('/test');
       expect(result).toBeNull();
+    });
+
+    it('throws on 5xx', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 500,
+        text: () => Promise.resolve('Server error'),
+        json: () => Promise.resolve({}),
+      }) as never;
+      await expect(apiGetOne<{ id: number }>('/test')).rejects.toThrow('[api] GET');
     });
 
     it('uses pgrst.object+json accept header', async () => {

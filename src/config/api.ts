@@ -82,11 +82,19 @@ export async function apiGetOne<T>(
   path: string,
   params?: Record<string, string>
 ): Promise<T | null> {
-  const results = await request<T[]>('GET', path, {
-    params,
-    headers: { Accept: 'application/vnd.pgrst.object+json' },
-  }).catch(() => [] as T[]);
-  return results[0] ?? null;
+  try {
+    const results = await request<T[]>('GET', path, {
+      params,
+      headers: { Accept: 'application/vnd.pgrst.object+json' },
+    });
+    return results[0] ?? null;
+  } catch (err) {
+    // Only swallow 404 and empty results; propagate 5xx
+    if (err instanceof Error && err.message.includes('404')) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function apiPost<TInput, TOutput = TInput>(
