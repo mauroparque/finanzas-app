@@ -25,7 +25,7 @@ export type Moneda = 'ARS' | 'USD' | 'USDT' | 'BRL';
 export type Unidad = 'HOGAR' | 'PROFESIONAL' | 'BRASIL';
 export type Macro = 'VIVIR' | 'TRABAJAR' | 'DEBER' | 'DISFRUTAR';
 export type TipoMovimiento = 'gasto' | 'ingreso';
-export type EstadoPrevisto = 'PENDING' | 'RESERVED' | 'PAID' | 'PAGADO';
+export type EstadoPrevisto = 'PENDIENTE' | 'RESERVADO' | 'PAGADO';
 
 export const UNIDAD_TO_MACRO: Record<Unidad, Macro> = {
   HOGAR: 'VIVIR',

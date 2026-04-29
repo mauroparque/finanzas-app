@@ -52,7 +52,7 @@ export const useServicios = () => {
   const updateEstado = async (id: number, estado: EstadoPrevisto) => {
     try {
       const body: Partial<MovimientoPrevisto> = { estado };
-      if (estado === 'PAID' || estado === 'PAGADO') {
+      if (estado === 'PAGADO') {
         body.fecha_pago = new Date().toISOString();
       }
       const updated = await apiPatch<MovimientoPrevisto, MovimientoPrevisto>(

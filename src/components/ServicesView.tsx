@@ -32,10 +32,10 @@ export function ServicesView({ onBack }: ServicesViewProps) {
   });
 
   const handleToggleEstado = (id: number, currentEstado: EstadoPrevisto) => {
-    if (currentEstado === 'PENDING') {
-      updateEstado(id, 'RESERVED');
-    } else if (currentEstado === 'RESERVED') {
-      updateEstado(id, 'PENDING');
+    if (currentEstado === 'PENDIENTE') {
+      updateEstado(id, 'RESERVADO');
+    } else if (currentEstado === 'RESERVADO') {
+      updateEstado(id, 'PENDIENTE');
     }
     // PAGADO is only reachable via markAsPaid (dual-write)
   };
@@ -63,18 +63,16 @@ export function ServicesView({ onBack }: ServicesViewProps) {
 
   const getStatusVariant = (estado: EstadoPrevisto): React.ComponentProps<typeof Badge>['variant'] => {
     switch (estado) {
-      case 'PENDING': return 'default';
-      case 'RESERVED': return 'warning';
-      case 'PAID':
+      case 'PENDIENTE': return 'default';
+      case 'RESERVADO': return 'warning';
       case 'PAGADO': return 'sage';
     }
   };
 
   const getStatusLabel = (estado: EstadoPrevisto) => {
     switch (estado) {
-      case 'PENDING': return 'Por Pagar';
-      case 'RESERVED': return 'Reservado';
-      case 'PAID':
+      case 'PENDIENTE': return 'Por Pagar';
+      case 'RESERVADO': return 'Reservado';
       case 'PAGADO': return 'Pagado';
     }
   };
@@ -109,12 +107,12 @@ export function ServicesView({ onBack }: ServicesViewProps) {
     });
   };
 
-  const paidCount = movimientosPrevistos.filter(mp => mp.estado === 'PAID' || mp.estado === 'PAGADO').length;
+  const paidCount = movimientosPrevistos.filter(mp => mp.estado === 'PAGADO').length;
   const progress = movimientosPrevistos.length > 0 ? (paidCount / movimientosPrevistos.length) * 100 : 0;
 
   const sortedItems = [...movimientosPrevistos].sort((a, b) => {
-    const aPaid = a.estado === 'PAID' || a.estado === 'PAGADO';
-    const bPaid = b.estado === 'PAID' || b.estado === 'PAGADO';
+    const aPaid = a.estado === 'PAGADO';
+    const bPaid = b.estado === 'PAGADO';
     if (aPaid && !bPaid) return 1;
     if (!aPaid && bPaid) return -1;
     const aDia = servicios.find(s => s.id === a.referencia_id)?.dia_vencimiento ?? 99;
@@ -175,7 +173,7 @@ export function ServicesView({ onBack }: ServicesViewProps) {
         ) : (
           sortedItems.map((mp) => {
             const def = servicios.find(s => s.id === mp.referencia_id);
-            const isPaid = mp.estado === 'PAID' || mp.estado === 'PAGADO';
+            const isPaid = mp.estado === 'PAGADO';
             const statusVariant = getStatusVariant(mp.estado);
             const statusLabel = getStatusLabel(mp.estado);
             const monto = mp.monto_real ?? mp.monto_estimado ?? def?.monto_estimado;
@@ -229,7 +227,7 @@ export function ServicesView({ onBack }: ServicesViewProps) {
                     {statusLabel}
                   </Badge>
 
-                  {mp.estado === 'PENDING' && (
+                  {mp.estado === 'PENDIENTE' && (
                     <div onClick={(e) => e.stopPropagation()}>
                       {payingItemId === mp.id ? (
                         <div className="flex items-center gap-2">

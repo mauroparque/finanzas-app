@@ -20,7 +20,7 @@ const mockMovimientoPrevisto = (overrides: Partial<MovimientoPrevisto> = {}): Mo
   nombre: 'EPEC',
   monto_estimado: 5000,
   moneda: 'ARS',
-  estado: 'PENDING',
+  estado: 'PENDIENTE',
   ...overrides,
 });
 
@@ -133,36 +133,20 @@ describe('useServicios', () => {
 
   describe('updateEstado', () => {
     it('calls apiPatch with correct endpoint and filters', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
+      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDIENTE' });
       vi.mocked(apiGet).mockResolvedValue([previsto]);
-      vi.mocked(apiPatch).mockResolvedValue([{ ...previsto, estado: 'RESERVED' }]);
+      vi.mocked(apiPatch).mockResolvedValue([{ ...previsto, estado: 'RESERVADO' }]);
 
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      await result.current.updateEstado(5, 'RESERVED');
+      await result.current.updateEstado(5, 'RESERVADO');
 
-      expect(apiPatch).toHaveBeenCalledWith('/movimientos_previstos_mes', { id: 'eq.5' }, { estado: 'RESERVED' });
-    });
-
-    it('sets fecha_pago when estado is PAID', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
-      vi.mocked(apiGet).mockResolvedValue([previsto]);
-      vi.mocked(apiPatch).mockResolvedValue([{ ...previsto, estado: 'PAID', fecha_pago: '2026-04-22T10:00:00Z' }]);
-
-      const { result } = renderHook(() => useServicios());
-      await waitFor(() => expect(result.current.loading).toBe(false));
-
-      await result.current.updateEstado(5, 'PAID');
-
-      expect(apiPatch).toHaveBeenCalledWith('/movimientos_previstos_mes', { id: 'eq.5' }, expect.objectContaining({
-        estado: 'PAID',
-        fecha_pago: expect.any(String),
-      }));
+      expect(apiPatch).toHaveBeenCalledWith('/movimientos_previstos_mes', { id: 'eq.5' }, { estado: 'RESERVADO' });
     });
 
     it('sets fecha_pago when estado is PAGADO', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
+      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDIENTE' });
       vi.mocked(apiGet).mockResolvedValue([previsto]);
       vi.mocked(apiPatch).mockResolvedValue([{ ...previsto, estado: 'PAGADO', fecha_pago: '2026-04-22T10:00:00Z' }]);
 
@@ -178,18 +162,18 @@ describe('useServicios', () => {
     });
 
     it('updates local state with patched movimiento', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
-      const updated = { ...previsto, estado: 'PAID' as const, fecha_pago: '2026-04-22T10:00:00Z' };
+      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDIENTE' });
+      const updated = { ...previsto, estado: 'PAGADO' as const, fecha_pago: '2026-04-22T10:00:00Z' };
       vi.mocked(apiGet).mockResolvedValue([previsto]);
       vi.mocked(apiPatch).mockResolvedValue([updated]);
 
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.movimientosPrevistos).toHaveLength(1));
 
-      await result.current.updateEstado(5, 'PAID');
+      await result.current.updateEstado(5, 'PAGADO');
 
       await waitFor(() => {
-        expect(result.current.movimientosPrevistos[0].estado).toBe('PAID');
+        expect(result.current.movimientosPrevistos[0].estado).toBe('PAGADO');
       });
     });
 
@@ -201,11 +185,11 @@ describe('useServicios', () => {
       const { result } = renderHook(() => useServicios());
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      await expect(result.current.updateEstado(5, 'PAID')).rejects.toThrow('Update failed');
+      await expect(result.current.updateEstado(5, 'PAGADO')).rejects.toThrow('Update failed');
     });
 
     it('does not update local state when updateEstado fails', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDING' });
+      const previsto = mockMovimientoPrevisto({ id: 5, estado: 'PENDIENTE' });
       vi.mocked(apiGet).mockResolvedValue([previsto]);
       vi.mocked(apiPatch).mockRejectedValue(new Error('Update failed'));
 
@@ -213,12 +197,12 @@ describe('useServicios', () => {
       await waitFor(() => expect(result.current.movimientosPrevistos).toHaveLength(1));
 
       try {
-        await result.current.updateEstado(5, 'PAID');
+        await result.current.updateEstado(5, 'PAGADO');
       } catch {
         // expected
       }
 
-      expect(result.current.movimientosPrevistos[0].estado).toBe('PENDING');
+      expect(result.current.movimientosPrevistos[0].estado).toBe('PENDIENTE');
     });
   });
 
@@ -279,7 +263,7 @@ describe('useServicios', () => {
 
   describe('markAsPaid', () => {
     it('creates movimiento before patching previsto', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDING', monto_estimado: 5000, moneda: 'ARS' });
+      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDIENTE', monto_estimado: 5000, moneda: 'ARS' });
       const def = mockServicioDefinicion({ id: 1 });
       vi.mocked(apiGet).mockImplementation((endpoint) => {
         if (endpoint === '/movimientos_previstos_mes') return Promise.resolve([previsto]);
@@ -302,7 +286,7 @@ describe('useServicios', () => {
     });
 
     it('does not patch previsto when apiPost fails', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDING', monto_estimado: 5000, moneda: 'ARS' });
+      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDIENTE', monto_estimado: 5000, moneda: 'ARS' });
       const def = mockServicioDefinicion({ id: 1 });
       vi.mocked(apiGet).mockImplementation((endpoint) => {
         if (endpoint === '/movimientos_previstos_mes') return Promise.resolve([previsto]);
@@ -321,7 +305,7 @@ describe('useServicios', () => {
     });
 
     it('updates local state with PAGADO after both writes succeed', async () => {
-      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDING', monto_estimado: 5000, moneda: 'ARS' });
+      const previsto = mockMovimientoPrevisto({ id: 1, estado: 'PENDIENTE', monto_estimado: 5000, moneda: 'ARS' });
       const def = mockServicioDefinicion({ id: 1 });
       vi.mocked(apiGet).mockImplementation((endpoint) => {
         if (endpoint === '/movimientos_previstos_mes') return Promise.resolve([previsto]);

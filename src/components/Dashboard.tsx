@@ -28,7 +28,7 @@ export function Dashboard() {
 
   const upcomingDeadlines = useMemo(() =>
     movimientosPrevistos
-      .filter(mp => mp.estado !== 'PAID' && mp.estado !== 'PAGADO')
+      .filter(mp => mp.estado !== 'PAGADO')
       .slice(0, 3),
     [movimientosPrevistos]
   );
@@ -228,7 +228,7 @@ export function Dashboard() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-1.5 h-1.5 rounded-full ${
-                        mp.estado === 'RESERVED'
+                        mp.estado === 'RESERVADO'
                           ? 'bg-sage-500'
                           : 'bg-terracotta-500 animate-pulse'
                       }`}
