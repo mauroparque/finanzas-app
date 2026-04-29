@@ -1,14 +1,9 @@
-import { type ReactNode } from 'react';
+import { type ComponentPropsWithoutRef } from 'react';
 import { cn } from '../../../utils/cn';
 
-interface ButtonProps {
+interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  children?: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
 }
 
 const variantStyles = {
