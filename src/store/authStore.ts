@@ -12,8 +12,21 @@ interface AuthState {
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refresh: () => Promise<SupabaseSession | null>;
+  refresh: (refreshToken?: string) => Promise<SupabaseSession | null>;
   hydrate: () => void;
+}
+
+function isValidSession(obj: unknown): obj is { session: SupabaseSession } {
+  if (!obj || typeof obj !== 'object') return false;
+  const o = obj as Record<string, unknown>;
+  if (!o.session || typeof o.session !== 'object') return false;
+  const s = o.session as Record<string, unknown>;
+  return (
+    typeof s.access_token === 'string' &&
+    typeof s.refresh_token === 'string' &&
+    typeof s.expires_at === 'number' &&
+    typeof s.token_type === 'string'
+  );
 }
 
 const persist = (session: SupabaseSession | null) => {
@@ -52,11 +65,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ session: null, status: 'idle', error: null });
   },
 
-  refresh: async () => {
-    const current = get().session;
-    if (!current) return null;
+  refresh: async (refreshToken?: string) => {
+    const token = refreshToken || get().session?.refresh_token;
+    if (!token) return null;
     try {
-      const fresh = await auth.refreshSession(current.refresh_token);
+      const fresh = await auth.refreshSession(token);
       persist(fresh);
       set({ session: fresh, status: 'authenticated', error: null });
       return fresh;
@@ -71,12 +84,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as { session: SupabaseSession };
+      const parsed = JSON.parse(raw);
+      if (!isValidSession(parsed)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
       const now = Math.floor(Date.now() / 1000);
       if (parsed.session.expires_at > now) {
         set({ session: parsed.session, status: 'authenticated' });
       } else {
-        localStorage.removeItem(STORAGE_KEY);
+        // P1-SCH-8: Attempt silent refresh using the persisted refresh_token
+        get().refresh(parsed.session.refresh_token).then(fresh => {
+          if (!fresh) localStorage.removeItem(STORAGE_KEY);
+        });
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);

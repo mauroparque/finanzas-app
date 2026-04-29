@@ -1,11 +1,11 @@
 /**
  * Supabase REST (PostgREST) client.
- * - Uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see src/config/supabase.ts).
+ * - Uses VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (see src/config/supabase.ts).
  * - Injects apikey + Authorization on every request.
  * - On 401, attempts a refresh once and retries the request.
  */
 
-import { REST_BASE, SUPABASE_ANON_KEY } from './supabase';
+import { REST_BASE, SUPABASE_PUBLISHABLE_KEY } from './supabase';
 import { useAuthStore } from '../store/authStore';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -22,7 +22,7 @@ function buildHeaders(extra?: Record<string, string>): Record<string, string> {
     'Content-Type': 'application/json',
     Accept: 'application/json',
     Prefer: 'return=representation',
-    apikey: SUPABASE_ANON_KEY,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
     ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
     ...extra,
   };
@@ -82,11 +82,20 @@ export async function apiGetOne<T>(
   path: string,
   params?: Record<string, string>
 ): Promise<T | null> {
-  const results = await request<T[]>('GET', path, {
-    params,
-    headers: { Accept: 'application/vnd.pgrst.object+json' },
-  }).catch(() => [] as T[]);
-  return results[0] ?? null;
+  try {
+    // PostgREST returns a single JSON object for object+json, not an array
+    const result = await request<T>('GET', path, {
+      params,
+      headers: { Accept: 'application/vnd.pgrst.object+json' },
+    });
+    return result ?? null;
+  } catch (err) {
+    // PostgREST returns 406 (not 404) for zero rows with object+json Accept header
+    if (err instanceof Error && (err.message.includes('404') || err.message.includes('406'))) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function apiPost<TInput, TOutput = TInput>(

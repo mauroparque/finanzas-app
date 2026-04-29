@@ -18,7 +18,7 @@ function getCurrencyFormatter(currency: string): Intl.NumberFormat {
   return currencyFormatters[currency];
 }
 
-export function formatCurrency(amount: number, currency: string = 'ARS'): string {
+export function formatCurrency(amount: number, currency: string): string {
   return getCurrencyFormatter(currency).format(amount);
 }
 

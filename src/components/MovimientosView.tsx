@@ -4,7 +4,7 @@ import { formatCurrency } from '../utils/formatters';
 import { Badge } from './common/ui/Badge';
 import { Card } from './common/ui/Card';
 
-export default function MovimientosView() {
+export function MovimientosView() {
   const month = useMemo(() => new Date(), []);
   const { transactions, loading } = useTransactions({ month });
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiGet, apiPatch } from '../config/api';
-import type { CuotaTarjeta } from '../types';
+import { apiGet, apiPatch, apiPost } from '../config/api';
+import type { CuotaTarjeta, CuotaTarjetaInput } from '../types';
 
 export const useCuotasTarjeta = (tarjeta?: string) => {
   const [cuotas, setCuotas] = useState<CuotaTarjeta[]>([]);
@@ -48,5 +48,16 @@ export const useCuotasTarjeta = (tarjeta?: string) => {
     }
   };
 
-  return { cuotas, loading, error, updateCuota, refresh: fetchCuotas };
+  const addCuota = async (cuota: CuotaTarjetaInput) => {
+    try {
+      const nuevo = await apiPost<CuotaTarjetaInput, CuotaTarjeta>('/cuotas_tarjeta', cuota);
+      setCuotas(prev => [nuevo, ...prev]);
+      return nuevo;
+    } catch (err) {
+      console.error('Error adding cuota:', err);
+      throw err;
+    }
+  };
+
+  return { cuotas, loading, error, updateCuota, addCuota, refresh: fetchCuotas };
 };

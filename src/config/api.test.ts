@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('../config/supabase', () => ({
   REST_BASE: 'https://api.test.com/rest/v1',
   AUTH_BASE: 'https://api.test.com/auth/v1',
-  SUPABASE_ANON_KEY: 'anon-key',
+  SUPABASE_PUBLISHABLE_KEY: 'publishable-key',
 }));
 
 import {
@@ -19,7 +19,7 @@ import { useAuthStore } from '../store/authStore';
 describe('PostgREST API CRUD helpers', () => {
   beforeEach(() => {
     import.meta.env.VITE_SUPABASE_URL = 'https://api.test.com';
-    import.meta.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'publishable-key';
     import.meta.env.DEV = true;
     useAuthStore.setState({ session: null, status: 'idle', error: null });
   });
@@ -55,21 +55,40 @@ describe('PostgREST API CRUD helpers', () => {
   describe('apiGetOne', () => {
     it('returns single record when found', async () => {
       const data = { id: 1, nombre: 'Test' };
-      mockFetch([data]);
+      // PostgREST object+json returns the object directly, not wrapped in an array
+      mockFetch(data);
       const result = await apiGetOne<{ id: number; nombre: string }>('/test', { id: 'eq.1' });
       expect(result).toEqual(data);
     });
 
-    it('returns null when no record found', async () => {
-      mockFetch([]);
+    it('returns null when no record found (406)', async () => {
+      // PostgREST returns 406 for zero rows with object+json Accept header
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 406,
+        text: () => Promise.resolve('Not acceptable'),
+        json: () => Promise.resolve({}),
+      }) as never;
       const result = await apiGetOne<{ id: number }>('/test', { id: 'eq.999' });
       expect(result).toBeNull();
     });
 
-    it('returns null on error', async () => {
-      mockFetch(null, false);
+    it('returns null on 404', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 404,
+        text: () => Promise.resolve('Not found'),
+        json: () => Promise.resolve({}),
+      }) as never;
       const result = await apiGetOne<{ id: number }>('/test');
       expect(result).toBeNull();
+    });
+
+    it('throws on 5xx', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 500,
+        text: () => Promise.resolve('Server error'),
+        json: () => Promise.resolve({}),
+      }) as never;
+      await expect(apiGetOne<{ id: number }>('/test')).rejects.toThrow('[api] GET');
     });
 
     it('uses pgrst.object+json accept header', async () => {
@@ -151,7 +170,7 @@ describe('auth headers', () => {
     await apiGet('/movimientos');
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(call[1].headers).toMatchObject({
-      apikey: 'anon-key',
+      apikey: 'publishable-key',
       Authorization: 'Bearer jwt-1',
     });
   });
@@ -161,7 +180,7 @@ describe('auth headers', () => {
     mockFetch([{ id: 1 }]);
     await apiGet('/movimientos');
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(call[1].headers).toMatchObject({ apikey: 'anon-key' });
+    expect(call[1].headers).toMatchObject({ apikey: 'publishable-key' });
     expect(call[1].headers).not.toHaveProperty('Authorization');
   });
 

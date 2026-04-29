@@ -43,7 +43,7 @@ export const useUIStore = create<UIStore>((set) => ({
     closeNewPlanModal: () => set({ isNewPlanModalOpen: false }),
 
     // Responsive
-    isMobile: window.innerWidth < 768,
+    isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
     setIsMobile: (isMobile) => set({ isMobile }),
 
     // Unit selector

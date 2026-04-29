@@ -4,39 +4,36 @@ import { useMediosPago } from '../hooks/useMediosPago';
 import { usePresupuestos } from '../hooks/usePresupuestos';
 import { useServicios } from '../hooks/useServicios';
 import { useTransactions } from '../hooks/useTransactions';
+import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
 import { formatCurrency } from '../utils/formatters';
 
-const Dashboard: React.FC = () => {
+export function Dashboard() {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
   const monthFilter = useMemo(() => new Date(), []);
   const { transactions } = useTransactions({ month: monthFilter });
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
+  const balancesByCurrency = useMemo(() => {
+    const map: Record<string, number> = {};
+    accounts.forEach(acc => {
+      const moneda = acc.moneda;
+      map[moneda] = (map[moneda] || 0) + parseFloat(String(acc.saldo));
+    });
+    return map;
+  }, [accounts]);
 
   const upcomingDeadlines = useMemo(() =>
     movimientosPrevistos
-      .filter(mp => mp.estado !== 'PAID' && mp.estado !== 'PAGADO')
+      .filter(mp => mp.estado !== 'PAGADO')
       .slice(0, 3),
     [movimientosPrevistos]
   );
 
-  const presupuestosConGasto = useMemo(() =>
-    presupuestos.map(p => {
-      const spent = transactions
-        .filter(t => {
-          const campo = p.tipo_objetivo === 'categoria' ? t.categoria : t.concepto;
-          return campo === p.nombre_objetivo && t.tipo === 'gasto';
-        })
-        .reduce((sum, t) => sum + parseFloat(String(t.monto)), 0);
-      return { ...p, spent };
-    }),
-    [presupuestos, transactions]
-  );
+  const presupuestosConGasto = useBudgetStatus(presupuestos, transactions);
 
   const getCategoryIcon = (category: string) => {
     const c = category.toLowerCase();
@@ -93,11 +90,20 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-start mb-6">
           <div>
             <p className="text-stone-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
-              <Wallet size={14} /> Total Consolidado
+              <Wallet size={14} /> Saldos por Moneda
             </p>
-            <h3 className="text-4xl font-serif font-bold text-stone-800 tracking-tighter">
-              {formatCurrency(totalBalance, 'ARS')}
-            </h3>
+            <div className="space-y-1">
+              {Object.entries(balancesByCurrency).map(([moneda, saldo]) => (
+                <h3 key={moneda} className="text-2xl font-serif font-bold text-stone-800 tracking-tighter">
+                  {formatCurrency(saldo, moneda)}
+                </h3>
+              ))}
+              {accounts.length === 0 && (
+                <h3 className="text-2xl font-serif font-bold text-stone-400 tracking-tighter">
+                  Sin cuentas activas
+                </h3>
+              )}
+            </div>
           </div>
         </div>
 
@@ -146,8 +152,9 @@ const Dashboard: React.FC = () => {
             </Card>
           ) : (
             presupuestosConGasto.map((p) => {
-              const percentage = Math.min((p.spent / p.limite) * 100, 100);
-              const isOver = p.spent > p.limite;
+              const limite = parseFloat(String(p.limite));
+              const percentage = Math.min((p.spent / limite) * 100, 100);
+              const isOver = p.spent > limite;
               const isNearLimit = percentage >= p.porcentaje_alerta;
               let color = 'emerald';
               if (isOver) color = 'rose';
@@ -176,7 +183,7 @@ const Dashboard: React.FC = () => {
                         {formatCurrency(p.spent, p.moneda)}
                       </span>
                       <span className="text-[10px] text-stone-500 font-medium">
-                        de {formatCurrency(p.limite, p.moneda)}
+                        de {formatCurrency(limite, p.moneda)}
                       </span>
                     </div>
                   </div>
@@ -221,7 +228,7 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-1.5 h-1.5 rounded-full ${
-                        mp.estado === 'RESERVED'
+                        mp.estado === 'RESERVADO'
                           ? 'bg-sage-500'
                           : 'bg-terracotta-500 animate-pulse'
                       }`}
@@ -255,6 +262,4 @@ const Dashboard: React.FC = () => {
       </section>
     </div>
   );
-};
-
-export default Dashboard;
+}

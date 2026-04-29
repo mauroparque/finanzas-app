@@ -3,7 +3,8 @@ import { Wifi, Zap, Receipt, CheckCircle2, CircleDashed, Loader2, Plus, CreditCa
 import type { EstadoPrevisto, Moneda, Unidad, MovimientoPrevisto, ServicioDefinicion } from '../types';
 import { useServicios } from '../hooks/useServicios';
 import { useMediosPago } from '../hooks/useMediosPago';
-import Modal from './common/Modal';
+import { getCategoriesForUnit, getConceptsForCategory } from '../config/classificationMap';
+import { Modal } from './common/Modal';
 import { Card, Badge, Input, Button } from './common/ui';
 import { formatCurrency } from '../utils/formatters';
 
@@ -11,7 +12,7 @@ interface ServicesViewProps {
   onBack?: () => void;
 }
 
-const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
+export function ServicesView({ onBack }: ServicesViewProps) {
   const { movimientosPrevistos, servicios, loading, updateEstado, addServicio, markAsPaid } = useServicios();
   const { mediosPago } = useMediosPago();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -23,18 +24,18 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
     monto_estimado: '',
     moneda: 'ARS' as Moneda,
     unidad: 'HOGAR' as Unidad,
-    categoria: 'Vivienda y Vida Diaria',
-    concepto: 'Servicios e Impuestos',
+    categoria: 'Vivienda',
+    concepto: 'Alquiler',
     detalle: '',
     dia_vencimiento: '',
     es_debito_automatico: false,
   });
 
   const handleToggleEstado = (id: number, currentEstado: EstadoPrevisto) => {
-    if (currentEstado === 'PENDING') {
-      updateEstado(id, 'RESERVED');
-    } else if (currentEstado === 'RESERVED') {
-      updateEstado(id, 'PENDING');
+    if (currentEstado === 'PENDIENTE') {
+      updateEstado(id, 'RESERVADO');
+    } else if (currentEstado === 'RESERVADO') {
+      updateEstado(id, 'PENDIENTE');
     }
     // PAGADO is only reachable via markAsPaid (dual-write)
   };
@@ -62,18 +63,16 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
 
   const getStatusVariant = (estado: EstadoPrevisto): React.ComponentProps<typeof Badge>['variant'] => {
     switch (estado) {
-      case 'PENDING': return 'default';
-      case 'RESERVED': return 'warning';
-      case 'PAID':
+      case 'PENDIENTE': return 'default';
+      case 'RESERVADO': return 'warning';
       case 'PAGADO': return 'sage';
     }
   };
 
   const getStatusLabel = (estado: EstadoPrevisto) => {
     switch (estado) {
-      case 'PENDING': return 'Por Pagar';
-      case 'RESERVED': return 'Reservado';
-      case 'PAID':
+      case 'PENDIENTE': return 'Por Pagar';
+      case 'RESERVADO': return 'Reservado';
       case 'PAGADO': return 'Pagado';
     }
   };
@@ -100,20 +99,20 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
       monto_estimado: '',
       moneda: 'ARS' as Moneda,
       unidad: 'HOGAR' as Unidad,
-      categoria: 'Vivienda y Vida Diaria',
-      concepto: 'Servicios e Impuestos',
+      categoria: 'Vivienda',
+      concepto: 'Alquiler',
       detalle: '',
       dia_vencimiento: '',
       es_debito_automatico: false,
     });
   };
 
-  const paidCount = movimientosPrevistos.filter(mp => mp.estado === 'PAID' || mp.estado === 'PAGADO').length;
+  const paidCount = movimientosPrevistos.filter(mp => mp.estado === 'PAGADO').length;
   const progress = movimientosPrevistos.length > 0 ? (paidCount / movimientosPrevistos.length) * 100 : 0;
 
   const sortedItems = [...movimientosPrevistos].sort((a, b) => {
-    const aPaid = a.estado === 'PAID' || a.estado === 'PAGADO';
-    const bPaid = b.estado === 'PAID' || b.estado === 'PAGADO';
+    const aPaid = a.estado === 'PAGADO';
+    const bPaid = b.estado === 'PAGADO';
     if (aPaid && !bPaid) return 1;
     if (!aPaid && bPaid) return -1;
     const aDia = servicios.find(s => s.id === a.referencia_id)?.dia_vencimiento ?? 99;
@@ -174,7 +173,7 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
         ) : (
           sortedItems.map((mp) => {
             const def = servicios.find(s => s.id === mp.referencia_id);
-            const isPaid = mp.estado === 'PAID' || mp.estado === 'PAGADO';
+            const isPaid = mp.estado === 'PAGADO';
             const statusVariant = getStatusVariant(mp.estado);
             const statusLabel = getStatusLabel(mp.estado);
             const monto = mp.monto_real ?? mp.monto_estimado ?? def?.monto_estimado;
@@ -228,7 +227,7 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
                     {statusLabel}
                   </Badge>
 
-                  {mp.estado === 'PENDING' && (
+                  {mp.estado === 'PENDIENTE' && (
                     <div onClick={(e) => e.stopPropagation()}>
                       {payingItemId === mp.id ? (
                         <div className="flex items-center gap-2">
@@ -310,7 +309,19 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
               <select
                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
                 value={newServicio.unidad}
-                onChange={e => setNewServicio({ ...newServicio, unidad: e.target.value as Unidad })}
+                onChange={e => {
+                  const unidad = e.target.value as Unidad;
+                  const categories = getCategoriesForUnit(unidad);
+                  const firstCategory = categories[0]?.name || '';
+                  const concepts = getConceptsForCategory(unidad, firstCategory);
+                  const firstConcept = concepts[0]?.name || '';
+                  setNewServicio({
+                    ...newServicio,
+                    unidad,
+                    categoria: firstCategory,
+                    concepto: firstConcept,
+                  });
+                }}
               >
                 <option value="HOGAR">HOGAR</option>
                 <option value="PROFESIONAL">PROFESIONAL</option>
@@ -328,6 +339,37 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
                 <option value="USD">USD</option>
                 <option value="USDT">USDT</option>
                 <option value="BRL">BRL</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-stone-700 mb-1 block">Categoría</label>
+              <select
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
+                value={newServicio.categoria}
+                onChange={e => {
+                  const categoria = e.target.value;
+                  const concepts = getConceptsForCategory(newServicio.unidad, categoria);
+                  const firstConcept = concepts[0]?.name || '';
+                  setNewServicio({ ...newServicio, categoria, concepto: firstConcept });
+                }}
+              >
+                {getCategoriesForUnit(newServicio.unidad).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-stone-700 mb-1 block">Concepto</label>
+              <select
+                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-stone-800 appearance-none"
+                value={newServicio.concepto}
+                onChange={e => setNewServicio({ ...newServicio, concepto: e.target.value })}
+              >
+                {getConceptsForCategory(newServicio.unidad, newServicio.categoria).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -349,4 +391,4 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
   );
 };
 
-export default ServicesView;
+

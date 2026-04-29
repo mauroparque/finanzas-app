@@ -7,6 +7,7 @@ import {
     getConceptsForCategory,
     getDetailsForConcept
 } from '../../config/classificationMap';
+import { UNIDAD_TO_MACRO } from '../../types';
 import { Button } from '../common/ui/Button';
 import { Input } from '../common/ui/Input';
 import { cn } from '../../utils/cn';
@@ -15,21 +16,45 @@ interface TransactionFormProps {
     onSuccess: () => void;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
+const LAST_USED_KEY = 'finanzas-last-used';
+
+interface LastUsed {
+    unit: string;
+    category: string;
+    concept: string;
+}
+
+function getLastUsed(): LastUsed | null {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(LAST_USED_KEY);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw) as LastUsed;
+    } catch {
+        return null;
+    }
+}
+
+function setLastUsed(values: LastUsed) {
+    localStorage.setItem(LAST_USED_KEY, JSON.stringify(values));
+}
+
+export function TransactionForm({ onSuccess }: TransactionFormProps) {
     const { addTransaction } = useTransactions();
     const { accounts } = useMediosPago();
 
+    const lastUsed = getLastUsed();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         amount: '',
-        unit: 'HOGAR' as 'HOGAR' | 'PROFESIONAL' | 'BRASIL',
-        category: 'Vivienda y Vida Diaria',
-        concept: 'Abastecimiento',
+        unit: (lastUsed?.unit || 'HOGAR') as 'HOGAR' | 'PROFESIONAL' | 'BRASIL',
+        category: lastUsed?.category || 'Vivienda',
+        concept: lastUsed?.concept || 'Alquiler',
         detail: '',
         type: 'expense' as 'income' | 'expense',
         account: '',
         currency: 'ARS' as 'ARS' | 'USD' | 'USDT' | 'BRL',
-        date_operation: new Date().toISOString().split('T')[0],
+        dateOperation: new Date().toISOString().split('T')[0],
         isRecurring: false
     });
 
@@ -62,13 +87,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                 monto: parseFloat(formData.amount),
                 tipo: formData.type === 'expense' ? 'gasto' : 'ingreso',
                 moneda: formData.currency,
+                macro: UNIDAD_TO_MACRO[formData.unit],
                 unidad: formData.unit,
                 categoria: formData.category,
                 concepto: formData.concept,
                 detalle: formData.detail || formData.concept,
-                fecha_operacion: new Date(formData.date_operation).toISOString(),
+                fecha_operacion: new Date(formData.dateOperation).toISOString(),
                 medio_pago: String(formData.account),
                 fuente: 'manual'
+            });
+            setLastUsed({
+                unit: formData.unit,
+                category: formData.category,
+                concept: formData.concept,
             });
             setLoading(false);
             onSuccess();
@@ -128,7 +159,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                     <select
                         className="w-full bg-white border border-stone-300 rounded-xl py-3 px-2 text-stone-800 font-bold appearance-none focus:border-terracotta-400 focus:ring-2 focus:ring-terracotta-200 focus:outline-none transition-colors"
                         value={formData.currency}
-                        onChange={e => setFormData({ ...formData, currency: e.target.value as any })}
+                        onChange={e => setFormData({ ...formData, currency: e.target.value as 'ARS' | 'USD' | 'USDT' | 'BRL' })}
                     >
                         {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -162,8 +193,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                         label="Fecha Op."
                         type="date"
                         required
-                        value={formData.date_operation}
-                        onChange={e => setFormData({ ...formData, date_operation: e.target.value })}
+                        value={formData.dateOperation}
+                        onChange={e => setFormData({ ...formData, dateOperation: e.target.value })}
                     />
                 </div>
             </div>
@@ -245,4 +276,4 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
     );
 };
 
-export default TransactionForm;
+
