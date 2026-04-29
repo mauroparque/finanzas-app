@@ -1,4 +1,4 @@
-import { AUTH_BASE, SUPABASE_ANON_KEY } from '../config/supabase';
+import { AUTH_BASE, SUPABASE_PUBLISHABLE_KEY } from '../config/supabase';
 
 export interface SupabaseSession {
   access_token: string;
@@ -17,7 +17,7 @@ async function authRequest<T>(path: string, body: unknown, token?: string): Prom
   const res = await fetch(`${AUTH_BASE}${path}`, {
     method: 'POST',
     headers: {
-      apikey: SUPABASE_ANON_KEY,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
@@ -69,7 +69,7 @@ export async function signOut(accessToken: string): Promise<void> {
     await fetch(`${AUTH_BASE}/logout`, {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_ANON_KEY,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
         Authorization: `Bearer ${accessToken}`,
       },
     });

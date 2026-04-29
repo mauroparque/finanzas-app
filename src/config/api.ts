@@ -1,11 +1,11 @@
 /**
  * Supabase REST (PostgREST) client.
- * - Uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (see src/config/supabase.ts).
+ * - Uses VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (see src/config/supabase.ts).
  * - Injects apikey + Authorization on every request.
  * - On 401, attempts a refresh once and retries the request.
  */
 
-import { REST_BASE, SUPABASE_ANON_KEY } from './supabase';
+import { REST_BASE, SUPABASE_PUBLISHABLE_KEY } from './supabase';
 import { useAuthStore } from '../store/authStore';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -22,7 +22,7 @@ function buildHeaders(extra?: Record<string, string>): Record<string, string> {
     'Content-Type': 'application/json',
     Accept: 'application/json',
     Prefer: 'return=representation',
-    apikey: SUPABASE_ANON_KEY,
+      apikey: SUPABASE_PUBLISHABLE_KEY,
     ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
     ...extra,
   };

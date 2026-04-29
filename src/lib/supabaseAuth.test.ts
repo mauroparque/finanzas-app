@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../config/supabase', () => ({
   AUTH_BASE: 'https://test.supabase.co/auth/v1',
-  SUPABASE_ANON_KEY: 'anon-key',
+  SUPABASE_PUBLISHABLE_KEY: 'publishable-key',
 }));
 
 import { signIn, refreshSession, signOut } from './supabaseAuth';
@@ -10,7 +10,7 @@ import { signIn, refreshSession, signOut } from './supabaseAuth';
 describe('supabaseAuth', () => {
   beforeEach(() => {
     import.meta.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
-    import.meta.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'publishable-key';
   });
 
   afterEach(() => vi.restoreAllMocks());
@@ -64,7 +64,7 @@ describe('supabaseAuth', () => {
       expect(url).toContain('/auth/v1/token?grant_type=password');
       expect((opts as RequestInit).method).toBe('POST');
       expect((opts as RequestInit).headers).toMatchObject({
-        apikey: 'anon-key',
+        apikey: 'publishable-key',
         'Content-Type': 'application/json',
       });
     });
@@ -113,7 +113,7 @@ describe('supabaseAuth', () => {
       const [url, opts] = fetchMock.mock.calls[0];
       expect(url).toContain('/auth/v1/logout');
       expect((opts as RequestInit).headers).toMatchObject({
-        apikey: 'anon-key',
+        apikey: 'publishable-key',
         Authorization: 'Bearer jwt',
       });
     });

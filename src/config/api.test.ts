@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('../config/supabase', () => ({
   REST_BASE: 'https://api.test.com/rest/v1',
   AUTH_BASE: 'https://api.test.com/auth/v1',
-  SUPABASE_ANON_KEY: 'anon-key',
+  SUPABASE_PUBLISHABLE_KEY: 'publishable-key',
 }));
 
 import {
@@ -19,7 +19,7 @@ import { useAuthStore } from '../store/authStore';
 describe('PostgREST API CRUD helpers', () => {
   beforeEach(() => {
     import.meta.env.VITE_SUPABASE_URL = 'https://api.test.com';
-    import.meta.env.VITE_SUPABASE_ANON_KEY = 'anon-key';
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'publishable-key';
     import.meta.env.DEV = true;
     useAuthStore.setState({ session: null, status: 'idle', error: null });
   });
@@ -151,7 +151,7 @@ describe('auth headers', () => {
     await apiGet('/movimientos');
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(call[1].headers).toMatchObject({
-      apikey: 'anon-key',
+      apikey: 'publishable-key',
       Authorization: 'Bearer jwt-1',
     });
   });
@@ -161,7 +161,7 @@ describe('auth headers', () => {
     mockFetch([{ id: 1 }]);
     await apiGet('/movimientos');
     const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(call[1].headers).toMatchObject({ apikey: 'anon-key' });
+    expect(call[1].headers).toMatchObject({ apikey: 'publishable-key' });
     expect(call[1].headers).not.toHaveProperty('Authorization');
   });
 
