@@ -26,6 +26,18 @@ export function Dashboard() {
     return map;
   }, [accounts]);
 
+  const spentByMacro = useMemo(() => {
+    const map: Record<string, number> = {};
+    transactions
+      .filter(t => t.tipo === 'gasto')
+      .forEach(t => {
+        const macro = t.macro || 'VIVIR';
+        const monto = parseFloat(String(t.monto));
+        map[macro] = (map[macro] || 0) + monto;
+      });
+    return map;
+  }, [transactions]);
+
   const upcomingDeadlines = useMemo(() =>
     movimientosPrevistos
       .filter(mp => mp.estado !== 'PAGADO')
@@ -135,6 +147,47 @@ export function Dashboard() {
           </div>
         </div>
       </Card>
+
+      {/* Macro Summary */}
+      <section className="space-y-4">
+        <div className="flex justify-between items-center px-1">
+          <h4 className="font-serif font-bold text-stone-800 text-lg">
+            ¿En qué gastamos?
+          </h4>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {(['VIVIR', 'TRABAJAR', 'DEBER', 'DISFRUTAR'] as const).map(macro => {
+            const spent = spentByMacro[macro] || 0;
+            const labels: Record<string, string> = {
+              VIVIR: 'Vivir',
+              TRABAJAR: 'Trabajar',
+              DEBER: 'Deber',
+              DISFRUTAR: 'Disfrutar',
+            };
+            const colors: Record<string, { bg: string; text: string }> = {
+              VIVIR: { bg: 'bg-sage-500/10', text: 'text-sage-600' },
+              TRABAJAR: { bg: 'bg-navy-500/10', text: 'text-navy-600' },
+              DEBER: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
+              DISFRUTAR: { bg: 'bg-terracotta-500/10', text: 'text-terracotta-600' },
+            };
+            const c = colors[macro] || colors.VIVIR;
+
+            return (
+              <Card key={macro} padding="md" shadow="soft" className={c.bg}>
+                <div className="flex flex-col">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${c.text} mb-1`}>
+                    {labels[macro]}
+                  </span>
+                  <span className="text-lg font-serif font-bold text-stone-800 tracking-tight">
+                    {formatCurrency(spent, 'ARS')}
+                  </span>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Cotizaciones FX Widget */}
       <CotizacionWidget />
