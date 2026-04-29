@@ -1,43 +1,44 @@
 ---
 name: Estado de fases — Finanzas 2.0
-description: Qué fases están completas, cuál está en progreso, worktree activo y stack confirmado
+description: Fases completadas, rama activa, decisiones de diseño tomadas, y gaps pendientes para handoff a Agos (actualizado 2026-04-28 v2)
 type: project
 ---
 
-**Stack confirmado:** React hooks → api.ts → PostgREST → PostgreSQL. El proyecto NO usa Zustand. Firebase es exclusivamente hosting estático. La migration es `001_finanzas_rearchitecture.sql` (no "002").
+**Stack confirmado (actualizado 2026-04-28):** React hooks → api.ts → Supabase (PostgreSQL + GoTrue Auth + PostgREST). Zustand para `authStore` (sesión + refresh) y `uiStore` (navegación). Sin SDK `@supabase/supabase-js` — se usa fetch crudo con helpers propios. Firebase es exclusivamente hosting estático.
 
-**Why:** El commit de refactor Phase 0 en main mencionaba Zustand y migration 002, pero el worktree lo corrigió. Phase 1 completó la migración total de Firestore a PostgREST.
+**Why:** Phase 4 migró el backend de PostgreSQL+PostgREST en VPS con Tailscale a Supabase cloud. El motivo principal fue resolver D1 (certificado self-signed que bloqueaba acceso de Agos desde móvil). La decisión de no usar el SDK fue intencional para mantener control total sobre el cliente HTTP.
 
-**How to apply:** No mencionar Zustand como parte del stack. No mencionar Firebase como backend.
+**How to apply:** Mencionar Zustand como parte del stack (authStore + uiStore). El VPS ya no es autoritativo. n8n y bot Telegram están discontinuados — no son parte del stack ni del plan futuro.
 
 ---
 
-Phase 0 cerrada (2026-04-11). Entregables: `types/index.ts`, `classificationMap.ts`, `api.ts` (PostgREST), `001_finanzas_rearchitecture.sql` (173 líneas).
+Phase 0 cerrada (2026-04-11) — tipos, taxonomía, API client, migration 001.
+Phase 1 cerrada (2026-04-22) — hooks migrados a PostgREST, Firebase removido del código fuente.
+Phase 2 cerrada (2026-04-27) — UI Editorial Orgánico, navegación responsiva.
+Phase 3 cerrada (2026-04-27) — tasks 3.0→3.10, merge a main en commit 6d113d8.
+Phase 4 cerrada (2026-04-28) — migración a Supabase: auth real + RLS + cliente API reescrito, 12 commits en feat/supabase-migration.
 
-Phase 1 completada (2026-04-22):
-- `feat/phase1-foundation` mergeada a `main` (`e087778`)
-- Tailscale instalado en VPS, hostname `n8n.tail089052.ts.net`
-- PostgREST desplegado en Coolify (Docker, red `coolify`, Traefik TLS terminator)
-- `PGRST_DB_URI` corregido → apunta a `finanzas_app`; rol `web_anon` creado con GRANTs
-- `VITE_API_URL` configurado y funcional
-- `useServicios.ts` y `usePresupuestos.ts` creados (reemplazan hooks de Firestore)
-- `useServices.ts`, `useBudgets.ts`, `config/firebase.ts` eliminados
-- Migrations adicionales ejecutadas: `RENAME fecha_operation → fecha_operacion`; columnas `saldo`, `moneda`, `saldo_inicial` en `medios_pago`
-- App en producción con cero errores de consola
+---
 
-Phase 2 completada (2026-04-22):
-- Rama: `feat/phase2-ui-redesign` — PR #4 mergeado a `main`
-- Tema "Editorial Orgánico" aplicado: stone-50, terracotta, sage, navy
-- App shell responsive: BottomNav (mobile) + Sidebar (desktop)
-- UI Primitives: Card, Button, Badge, Input, cn utility
-- Dashboard rediseñado: saldo por moneda, Macros grid, presupuestos con filtro moneda/unidad, vencimientos
-- CardsView con useCuotasTarjeta + usePrestamos (datos reales + empty states)
-- ServicesView: flujo PENDING→PAGADO con modal, compensating delete, fetch-by-ID fallback para defs inactivas
-- @types/react@19 + @types/react-dom@19 instalados (faltaban como dev deps)
+**Corte de datos 2026-04-28:** scripts/migrate-to-supabase.sh fue ejecutado. Supabase cloud tiene los datos reales. PostgreSQL del VPS deja de ser autoritativo.
 
-Deuda técnica activa post-Phase 2:
-1. Certificado TLS self-signed — browsers requieren excepción manual. Bloquea onboarding de Agos.
-2. `saldo` en `medios_pago` = 0 — necesitan datos reales.
-3. Clasificación macro por keywords en Dashboard — `Movimiento` no tiene campo `macro`; Phase 3.
+**n8n / bot Telegram discontinuados (2026-04-28):** La carga de movimientos es exclusivamente vía app web. Las referencias en CLAUDE.md están desactualizadas (backlog BT-2).
 
-Pendiente para Phase 3: defaults "último usado" en TransactionForm (bloqueador regla 3 taps), widget FX en Dashboard, `useCotizaciones`, `CotizacionesView`, `AnalisisView`.
+**Decisión de diseño DA-1 — RLS auth_all:** Acceso total a cualquier usuario autenticado. Correcto para uso familiar exclusivo (Mauro + Agos). No requiere endurecimiento.
+
+---
+
+**Estado actual (2026-04-28):**
+- Review integral pre-merge con finanzas-reviewer: EN CURSO sobre feat/supabase-migration.
+- Pendiente: merge a main, luego Phase 5 (G1 + G2 como P1).
+
+**Backlog técnico nuevo:**
+- BT-1: Generación mensual de movimientos_previstos_mes — con n8n discontinuado, sin workflow automático. Opciones: pg_cron, Edge Function de Supabase, o trigger client-side al primer login.
+- BT-2: Actualizar CLAUDE.md para remover referencias a n8n como canal de carga.
+
+**Gaps pendientes para handoff a Agos:**
+- G1: Dashboard sin agregación por Macro (VIVIR/TRABAJAR/DEBER/DISFRUTAR) — pregunta central del producto.
+- G2: TransactionForm con defaults hardcodeados — regla de 3 taps no desbloqueada.
+- G4: useCotizaciones sin fetch a CriptoYa — widget FX muestra vacío sin datos precargados.
+- G5: AnalisisView es stub vacío.
+- G6: saldo en medios_pago = 0.
