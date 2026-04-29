@@ -160,7 +160,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] Agregación por Macro en Dashboard (VIVIR/TRABAJAR/DEBER/DISFRUTAR en tiempo real) — **G1** — commit `318d7c7`
 - [x] Defaults "último usado" en TransactionForm (desbloquea regla 3 taps) — commit `3696f08`
 - [x] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx` — **G4** — commit `becec49`
-- [ ] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales) — **G5**
+- [x] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales) — **G5** — commit `f38fdfb`
 - [ ] Seed de `medios_pago` con saldos reales — **G6**
 - [ ] Testing manual completo (spec + implementation plan)
 - [ ] Deploy a Firebase Hosting (`firebase deploy --only hosting`)
@@ -232,7 +232,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 | ID | Gap | Módulo | Detalle |
 |----|-----|--------|---------|
 | ~~G4~~ | ~~**`useCotizaciones` solo lee cache PostgREST**~~ | ~~Cotizaciones FX~~ | ✅ **Resuelto** (2026-04-29) — `useCotizaciones` ahora hace fetch paralelo a `https://criptoya.com/api/dolar` y `/api/brl`, parsea `ask`/`bid`/`time` a `CotizacionFX`, hace write-back fire-and-forget a `cotizaciones_fx` vía `apiPost`, y mergea + deduplica por `par`+`tipo`. Commit `becec49`. |
-| G5 | **`AnalisisView` es stub vacío** | Análisis | Muestra *"Vista de análisis — próximamente"*. Sin Recharts, sin lazy loading, sin tendencias. Era esperado como stub, pero es deuda significativa para la visión de BI desktop-first. |
+| ~~G5~~ | ~~**`AnalisisView` es stub vacío**~~ | ~~Análisis~~ | ✅ **Resuelto** (2026-04-29) — Reemplazado stub por `AnalisisView` con `MacroTrendChart` (stacked `AreaChart` de Recharts). Muestra evolución diaria del mes agrupada por Macro (VIVIR sage, TRABAJAR navy, DEBER amber, DISFRUTAR terracotta). Datos de `useTransactions({ month })`. Commit `f38fdfb`. |
 | G6 | **`saldo` en `medios_pago` = 0 en la DB** | Datos | Las columnas existen pero los valores son 0. El Dashboard muestra balance $0.00 hasta que se carguen saldos iniciales. |
 
 ### 🟢 Bajo impacto (para iteraciones futuras)

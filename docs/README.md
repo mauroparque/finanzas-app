@@ -119,7 +119,7 @@ Resumen de gaps críticos (actualizado post-auditoría 2026-04-29):
 | G2 | TransactionForm sin defaults "último usado" | Pendiente (agravado por P0-7: defaults inválidos) |
 | G3 | Certificado TLS self-signed (resuelto por migración Supabase) | ✅ Resuelto |
 | ~~G4~~ | ~~`useCotizaciones` sin fetch a CriptoYa~~ | ✅ Resuelto (2026-04-29) — Fetch directo a CriptoYa + write-back a cache |
-| G5 | `AnalisisView` es stub vacío | Pendiente |
+| ~~G5~~ | ~~`AnalisisView` es stub vacío~~ | ✅ Resuelto (2026-04-29) — Stacked AreaChart por Macro con Recharts |
 | G6 | `saldo` en `medios_pago` = 0 | Pendiente |
 | — | **11 P0 blockers de auditoría** (D9–D18 en PROJECT_TRACKING.md) | ⚠️ Bloqueante |
 
