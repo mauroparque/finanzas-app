@@ -9,7 +9,7 @@ import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
 import { formatCurrency } from '../utils/formatters';
 
-const Dashboard: React.FC = () => {
+export function Dashboard() {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
@@ -271,6 +271,4 @@ const Dashboard: React.FC = () => {
       </section>
     </div>
   );
-};
-
-export default Dashboard;
+}

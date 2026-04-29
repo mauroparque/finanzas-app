@@ -483,4 +483,4 @@ export const getAllConcepts = (): string[] => {
     );
 };
 
-export default CLASSIFICATION_MAP;
+

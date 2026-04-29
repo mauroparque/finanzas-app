@@ -1,6 +1,6 @@
 import { Card } from './common/ui/Card';
 
-export default function AnalisisView() {
+export function AnalisisView() {
   return (
     <div className="flex flex-col items-center justify-center h-96 text-stone-400">
       <Card className="text-center p-8">

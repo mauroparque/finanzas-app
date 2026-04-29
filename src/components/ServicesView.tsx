@@ -4,7 +4,7 @@ import type { EstadoPrevisto, Moneda, Unidad, MovimientoPrevisto, ServicioDefini
 import { useServicios } from '../hooks/useServicios';
 import { useMediosPago } from '../hooks/useMediosPago';
 import { getCategoriesForUnit, getConceptsForCategory } from '../config/classificationMap';
-import Modal from './common/Modal';
+import { Modal } from './common/Modal';
 import { Card, Badge, Input, Button } from './common/ui';
 import { formatCurrency } from '../utils/formatters';
 
@@ -12,7 +12,7 @@ interface ServicesViewProps {
   onBack?: () => void;
 }
 
-const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
+export function ServicesView({ onBack }: ServicesViewProps) {
   const { movimientosPrevistos, servicios, loading, updateEstado, addServicio, markAsPaid } = useServicios();
   const { mediosPago } = useMediosPago();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -393,4 +393,4 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
   );
 };
 
-export default ServicesView;
+

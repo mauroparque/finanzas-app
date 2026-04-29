@@ -7,7 +7,7 @@ import { formatCurrency } from '../utils/formatters';
 import { getCategoriesForUnit, getConceptsForCategory } from '../config/classificationMap';
 import type { CuotaTarjeta, Unidad } from '../types';
 
-const CardsView: FC = () => {
+export function CardsView() {
   const [activeCard, setActiveCard] = useState<'visa' | 'prestamos'>('visa');
   const { cuotas, loading: loadingCuotas, error: errorCuotas, updateCuota } = useCuotasTarjeta();
   const { prestamos, loading: loadingPrestamos, error: errorPrestamos } = usePrestamos();
@@ -278,4 +278,4 @@ const CardsView: FC = () => {
   );
 };
 
-export default CardsView;
+

@@ -8,7 +8,7 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     const [show, setShow] = useState(isOpen);
 
     useEffect(() => {
@@ -49,4 +49,4 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     );
 };
 
-export default Modal;
+

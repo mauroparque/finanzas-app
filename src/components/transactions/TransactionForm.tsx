@@ -16,7 +16,7 @@ interface TransactionFormProps {
     onSuccess: () => void;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
+export function TransactionForm({ onSuccess }: TransactionFormProps) {
     const { addTransaction } = useTransactions();
     const { accounts } = useMediosPago();
 
@@ -247,4 +247,4 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
     );
 };
 
-export default TransactionForm;
+

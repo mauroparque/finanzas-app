@@ -3,7 +3,7 @@ import { formatCurrency } from '../utils/formatters';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 
-export default function CotizacionesView() {
+export function CotizacionesView() {
   const { rates, loading } = useCotizaciones();
 
   if (loading) {
