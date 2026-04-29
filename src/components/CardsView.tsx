@@ -1,15 +1,23 @@
 import { useState, useMemo, type FC } from 'react';
-import { PieChart, CreditCard, Landmark } from 'lucide-react';
+import { PieChart, CreditCard, Landmark, Edit3 } from 'lucide-react';
 import { Card } from './common/ui/Card';
 import { useCuotasTarjeta } from '../hooks/useCuotasTarjeta';
 import { usePrestamos } from '../hooks/usePrestamos';
 import { formatCurrency } from '../utils/formatters';
-import type { CuotaTarjeta } from '../types';
+import { getCategoriesForUnit, getConceptsForCategory } from '../config/classificationMap';
+import type { CuotaTarjeta, Unidad } from '../types';
 
 const CardsView: FC = () => {
   const [activeCard, setActiveCard] = useState<'visa' | 'prestamos'>('visa');
-  const { cuotas, loading: loadingCuotas, error: errorCuotas } = useCuotasTarjeta();
+  const { cuotas, loading: loadingCuotas, error: errorCuotas, updateCuota } = useCuotasTarjeta();
   const { prestamos, loading: loadingPrestamos, error: errorPrestamos } = usePrestamos();
+
+  const [editingCuotaId, setEditingCuotaId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<{
+    unidad: Unidad;
+    categoria: string;
+    concepto: string;
+  }>({ unidad: 'HOGAR', categoria: '', concepto: '' });
 
   const groupedCuotas = useMemo<Record<string, CuotaTarjeta[]>>(() => {
     return cuotas.reduce((acc, cuota) => {
@@ -75,7 +83,10 @@ const CardsView: FC = () => {
                   </div>
                   <div className="grid gap-3">
                     {items.map((item) => {
-                      const progress = (item.cuota_actual / item.total_cuotas) * 100;
+                      const progress = (parseFloat(String(item.cuota_actual)) / parseFloat(String(item.total_cuotas))) * 100;
+                      const validCategories = getCategoriesForUnit(item.unidad);
+                      const isCategoryValid = validCategories.some(c => c.name === item.categoria);
+                      const remaining = parseFloat(String(item.total_cuotas)) - parseFloat(String(item.cuota_actual));
                       return (
                         <Card key={item.id} shadow="soft" className="flex flex-col gap-3">
                           <div className="flex items-center justify-between">
@@ -87,12 +98,15 @@ const CardsView: FC = () => {
                                 <p className="text-sm font-bold text-stone-800">{item.descripcion}</p>
                                 <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wide mt-0.5">
                                   {item.categoria}
+                                  {!isCategoryValid && (
+                                    <span className="ml-2 text-terracotta-600">(inválido)</span>
+                                  )}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-bold text-stone-800 tracking-tight">
-                                {formatCurrency(item.monto_cuota, item.moneda)}
+                                {formatCurrency(parseFloat(String(item.monto_cuota)), item.moneda)}
                               </p>
                               <p className="text-[10px] text-stone-500 font-medium">
                                 <span className="text-stone-700">{item.cuota_actual}</span>{' '}
@@ -100,10 +114,78 @@ const CardsView: FC = () => {
                               </p>
                             </div>
                           </div>
+
+                          {editingCuotaId === item.id ? (
+                            <div className="space-y-2 bg-stone-50 p-3 rounded-xl border border-stone-200">
+                              <div className="grid grid-cols-3 gap-2">
+                                <select
+                                  className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-800"
+                                  value={editForm.unidad}
+                                  onChange={e => {
+                                    const u = e.target.value as Unidad;
+                                    const cats = getCategoriesForUnit(u);
+                                    setEditForm({ unidad: u, categoria: cats[0]?.name || '', concepto: '' });
+                                  }}
+                                >
+                                  {(['HOGAR','PROFESIONAL','BRASIL'] as const).map(u => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                                <select
+                                  className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-800"
+                                  value={editForm.categoria}
+                                  onChange={e => {
+                                    const cat = e.target.value;
+                                    const concepts = getConceptsForCategory(editForm.unidad, cat);
+                                    setEditForm({ ...editForm, categoria: cat, concepto: concepts[0]?.name || '' });
+                                  }}
+                                >
+                                  {getCategoriesForUnit(editForm.unidad).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                                </select>
+                                <select
+                                  className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-xs text-stone-800"
+                                  value={editForm.concepto}
+                                  onChange={e => setEditForm({ ...editForm, concepto: e.target.value })}
+                                >
+                                  {getConceptsForCategory(editForm.unidad, editForm.categoria).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                                </select>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  className="flex-1 py-1.5 bg-terracotta-500 text-white rounded-lg text-xs font-bold"
+                                  onClick={() => {
+                                    updateCuota(item.id, {
+                                      unidad: editForm.unidad,
+                                      categoria: editForm.categoria,
+                                      concepto: editForm.concepto,
+                                    });
+                                    setEditingCuotaId(null);
+                                  }}
+                                >
+                                  Guardar
+                                </button>
+                                <button
+                                  className="flex-1 py-1.5 bg-stone-200 text-stone-700 rounded-lg text-xs font-bold"
+                                  onClick={() => setEditingCuotaId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className="self-end text-[10px] text-stone-400 hover:text-terracotta-600 flex items-center gap-1 transition-colors"
+                              onClick={() => {
+                                setEditingCuotaId(item.id);
+                                setEditForm({ unidad: item.unidad, categoria: item.categoria, concepto: item.concepto });
+                              }}
+                            >
+                              <Edit3 size={10} /> Editar clasificación
+                            </button>
+                          )}
+
                           <div className="relative pt-2">
                             <div className="flex justify-between text-[10px] font-medium text-stone-500 mb-1.5">
                               <span>Progreso</span>
-                              <span>Faltan {item.total_cuotas - item.cuota_actual} cuotas</span>
+                              <span>Faltan {remaining} cuotas</span>
                             </div>
                             <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
                               <div
