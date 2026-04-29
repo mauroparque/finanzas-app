@@ -53,7 +53,8 @@ Spec v1.0
 
 ```text
 Auditoría integral post-migración Supabase
-  └── 2026-04-29-post-supabase-repo-audit.md  (4 dominios en paralelo + consolidación)
+  ├── 2026-04-23-auditoria-integral.md               (auditoría previa, en technical/)
+  └── 2026-04-29-auditoria-post-supabase.md          (11 P0 blockers, 30+ P1, 20+ P2)
 ```
 
 ---
@@ -76,7 +77,7 @@ Auditoría integral post-migración Supabase
 | [2026-04-22-phase3-editorial-organico.md](./plans/2026-04-22-phase3-editorial-organico.md) | Plan Phase 3: Editorial Orgánico UI, bugfixes, nuevos módulos (11 tasks: 3.0→3.10) | Completado ✓ |
 | [2026-04-22-unit-tests-implementation.md](./plans/2026-04-22-unit-tests-implementation.md) | Plan de implementación de tests unitarios | Pendiente |
 | [2026-04-27-supabase-migration.md](./plans/2026-04-27-supabase-migration.md) | Plan de migración a Supabase: auth + RLS + datos | Completado ✓ |
-| [2026-04-29-post-supabase-repo-audit.md](./plans/2026-04-29-post-supabase-repo-audit.md) | Plan de auditoría integral post-migración Supabase | En curso |
+| [2026-04-29-post-supabase-repo-audit.md](./plans/2026-04-29-post-supabase-repo-audit.md) | Plan de auditoría integral post-migración Supabase | Completado ✓ |
 
 ---
 
@@ -94,6 +95,7 @@ Auditoría integral post-migración Supabase
 | Documento | Descripción |
 |-----------|-------------|
 | [2026-04-23-auditoria-integral.md](./technical/2026-04-23-auditoria-integral.md) | Auditoría integral del repositorio post-migración |
+| [2026-04-29-auditoria-post-supabase.md](./technical/2026-04-29-auditoria-post-supabase.md) | Auditoría post-Supabase: 11 P0 blockers, 30+ P1, 20+ P2. Bloquea feature work hasta resolución. |
 
 ---
 
@@ -109,13 +111,16 @@ Auditoría integral post-migración Supabase
 
 Ver [PROJECT_TRACKING.md — Deuda Técnica Conocida](./PROJECT_TRACKING.md#deuda-técnica-conocida) para el estado detallado.
 
-Resumen de gaps críticos:
+Resumen de gaps críticos (actualizado post-auditoría 2026-04-29):
 
 | ID | Gap | Estado |
 |----|-----|--------|
-| G1 | Sin resumen por Macro en Dashboard | Pendiente |
-| G2 | TransactionForm sin defaults "último usado" | Pendiente |
+| G1 | Sin resumen por Macro en Dashboard | Pendiente (agravado por P0-1/P0-2: balances incorrectos) |
+| G2 | TransactionForm sin defaults "último usado" | Pendiente (agravado por P0-7: defaults inválidos) |
 | G3 | Certificado TLS self-signed (resuelto por migración Supabase) | ✅ Resuelto |
 | G4 | `useCotizaciones` sin fetch a CriptoYa | Pendiente |
 | G5 | `AnalisisView` es stub vacío | Pendiente |
 | G6 | `saldo` en `medios_pago` = 0 | Pendiente |
+| — | **11 P0 blockers de auditoría** (D9–D18 en PROJECT_TRACKING.md) | ⚠️ Bloqueante |
+
+Ver detalle completo en [PROJECT_TRACKING.md — Hallazgos de la Auditoría Post-Supabase](./PROJECT_TRACKING.md#hallazgos-de-la-auditoría-post-supabase-2026-04-29).
