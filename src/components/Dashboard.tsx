@@ -16,7 +16,14 @@ const Dashboard: React.FC = () => {
   const monthFilter = useMemo(() => new Date(), []);
   const { transactions } = useTransactions({ month: monthFilter });
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.saldo, 0);
+  const balancesByCurrency = useMemo(() => {
+    const map: Record<string, number> = {};
+    accounts.forEach(acc => {
+      const moneda = acc.moneda;
+      map[moneda] = (map[moneda] || 0) + parseFloat(String(acc.saldo));
+    });
+    return map;
+  }, [accounts]);
 
   const upcomingDeadlines = useMemo(() =>
     movimientosPrevistos
@@ -93,11 +100,20 @@ const Dashboard: React.FC = () => {
         <div className="flex justify-between items-start mb-6">
           <div>
             <p className="text-stone-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
-              <Wallet size={14} /> Total Consolidado
+              <Wallet size={14} /> Saldos por Moneda
             </p>
-            <h3 className="text-4xl font-serif font-bold text-stone-800 tracking-tighter">
-              {formatCurrency(totalBalance, 'ARS')}
-            </h3>
+            <div className="space-y-1">
+              {Object.entries(balancesByCurrency).map(([moneda, saldo]) => (
+                <h3 key={moneda} className="text-2xl font-serif font-bold text-stone-800 tracking-tighter">
+                  {formatCurrency(saldo, moneda)}
+                </h3>
+              ))}
+              {accounts.length === 0 && (
+                <h3 className="text-2xl font-serif font-bold text-stone-400 tracking-tighter">
+                  Sin cuentas activas
+                </h3>
+              )}
+            </div>
           </div>
         </div>
 
