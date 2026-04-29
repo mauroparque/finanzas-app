@@ -23,8 +23,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
     const [formData, setFormData] = useState({
         amount: '',
         unit: 'HOGAR' as 'HOGAR' | 'PROFESIONAL' | 'BRASIL',
-        category: 'Vivienda y Vida Diaria',
-        concept: 'Abastecimiento',
+        category: 'Vivienda',
+        concept: 'Alquiler',
         detail: '',
         type: 'expense' as 'income' | 'expense',
         account: '',
@@ -128,7 +128,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSuccess }) => {
                     <select
                         className="w-full bg-white border border-stone-300 rounded-xl py-3 px-2 text-stone-800 font-bold appearance-none focus:border-terracotta-400 focus:ring-2 focus:ring-terracotta-200 focus:outline-none transition-colors"
                         value={formData.currency}
-                        onChange={e => setFormData({ ...formData, currency: e.target.value as any })}
+                        onChange={e => setFormData({ ...formData, currency: e.target.value as 'ARS' | 'USD' | 'USDT' | 'BRL' })}
                     >
                         {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>

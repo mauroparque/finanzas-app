@@ -30,7 +30,7 @@ export type EstadoPrevisto = 'PENDING' | 'RESERVED' | 'PAID' | 'PAGADO';
 export const UNIDAD_TO_MACRO: Record<Unidad, Macro> = {
   HOGAR: 'VIVIR',
   PROFESIONAL: 'TRABAJAR',
-  BRASIL: 'DEBER',
+  BRASIL: 'VIVIR',
 };
 
 // ────────────────────────────────────────────────────────────────────────────
