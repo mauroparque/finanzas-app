@@ -55,13 +55,19 @@ describe('PostgREST API CRUD helpers', () => {
   describe('apiGetOne', () => {
     it('returns single record when found', async () => {
       const data = { id: 1, nombre: 'Test' };
-      mockFetch([data]);
+      // PostgREST object+json returns the object directly, not wrapped in an array
+      mockFetch(data);
       const result = await apiGetOne<{ id: number; nombre: string }>('/test', { id: 'eq.1' });
       expect(result).toEqual(data);
     });
 
-    it('returns null when no record found', async () => {
-      mockFetch([]);
+    it('returns null when no record found (406)', async () => {
+      // PostgREST returns 406 for zero rows with object+json Accept header
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false, status: 406,
+        text: () => Promise.resolve('Not acceptable'),
+        json: () => Promise.resolve({}),
+      }) as never;
       const result = await apiGetOne<{ id: number }>('/test', { id: 'eq.999' });
       expect(result).toBeNull();
     });

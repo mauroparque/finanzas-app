@@ -25,6 +25,7 @@ interface LastUsed {
 }
 
 function getLastUsed(): LastUsed | null {
+    if (typeof window === 'undefined') return null;
     const raw = localStorage.getItem(LAST_USED_KEY);
     if (!raw) return null;
     try {

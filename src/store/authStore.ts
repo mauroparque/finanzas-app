@@ -12,7 +12,7 @@ interface AuthState {
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refresh: () => Promise<SupabaseSession | null>;
+  refresh: (refreshToken?: string) => Promise<SupabaseSession | null>;
   hydrate: () => void;
 }
 
@@ -65,11 +65,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ session: null, status: 'idle', error: null });
   },
 
-  refresh: async () => {
-    const current = get().session;
-    if (!current) return null;
+  refresh: async (refreshToken?: string) => {
+    const token = refreshToken || get().session?.refresh_token;
+    if (!token) return null;
     try {
-      const fresh = await auth.refreshSession(current.refresh_token);
+      const fresh = await auth.refreshSession(token);
       persist(fresh);
       set({ session: fresh, status: 'authenticated', error: null });
       return fresh;
@@ -93,8 +93,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (parsed.session.expires_at > now) {
         set({ session: parsed.session, status: 'authenticated' });
       } else {
-        // P1-SCH-8: Attempt silent refresh
-        get().refresh().then(fresh => {
+        // P1-SCH-8: Attempt silent refresh using the persisted refresh_token
+        get().refresh(parsed.session.refresh_token).then(fresh => {
           if (!fresh) localStorage.removeItem(STORAGE_KEY);
         });
       }

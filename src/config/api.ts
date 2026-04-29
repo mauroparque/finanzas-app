@@ -83,14 +83,15 @@ export async function apiGetOne<T>(
   params?: Record<string, string>
 ): Promise<T | null> {
   try {
-    const results = await request<T[]>('GET', path, {
+    // PostgREST returns a single JSON object for object+json, not an array
+    const result = await request<T>('GET', path, {
       params,
       headers: { Accept: 'application/vnd.pgrst.object+json' },
     });
-    return results[0] ?? null;
+    return result ?? null;
   } catch (err) {
-    // Only swallow 404 and empty results; propagate 5xx
-    if (err instanceof Error && err.message.includes('404')) {
+    // PostgREST returns 406 (not 404) for zero rows with object+json Accept header
+    if (err instanceof Error && (err.message.includes('404') || err.message.includes('406'))) {
       return null;
     }
     throw err;
