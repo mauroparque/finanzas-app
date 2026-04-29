@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { Card } from './ui/Card';
 import { formatCurrency } from '../../utils/formatters';
-import { cn } from '../../utils/cn';
 
 export const CotizacionWidget: React.FC = () => {
   const { rates, loading, error, refresh } = useCotizaciones();
