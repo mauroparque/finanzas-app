@@ -53,7 +53,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
         type: 'expense' as 'income' | 'expense',
         account: '',
         currency: 'ARS' as 'ARS' | 'USD' | 'USDT' | 'BRL',
-        date_operation: new Date().toISOString().split('T')[0],
+        dateOperation: new Date().toISOString().split('T')[0],
         isRecurring: false
     });
 
@@ -91,7 +91,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                 categoria: formData.category,
                 concepto: formData.concept,
                 detalle: formData.detail || formData.concept,
-                fecha_operacion: new Date(formData.date_operation).toISOString(),
+                fecha_operacion: new Date(formData.dateOperation).toISOString(),
                 medio_pago: String(formData.account),
                 fuente: 'manual'
             });
@@ -192,8 +192,8 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                         label="Fecha Op."
                         type="date"
                         required
-                        value={formData.date_operation}
-                        onChange={e => setFormData({ ...formData, date_operation: e.target.value })}
+                        value={formData.dateOperation}
+                        onChange={e => setFormData({ ...formData, dateOperation: e.target.value })}
                     />
                 </div>
             </div>
