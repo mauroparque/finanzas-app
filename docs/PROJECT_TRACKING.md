@@ -2,8 +2,8 @@
 
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
-**Última actualización:** 2026-04-29 (v4 — P0 resueltos)  
-**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada (Dashboard parsea saldo correctamente y muestra balances por moneda), schema consolidado bajo `movimientos` (tabla `transactions` y huérfanas eliminadas), `categorias_maestras` evolucionada con macro y taxonomía spec v1.0 completa, campo `macro` agregado a tipos/DB/inserts, defaults de taxonomía corregidos en formularios, y archivos de entorno limpiados. **Pendiente:** rotar clave anónima de Supabase manualmente en el dashboard (la vieja sigue en git history).
+**Última actualización:** 2026-04-29 (v5.1 — Phase 5 en progreso, G1 resuelto)  
+**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio (named exports, SSR guards, test fixtures). **P0-11 resuelto:** clave anónica rotada a Publishable Key; variables de entorno limpias. **Phase 5 activa:** feature work desbloqueado. **G1 resuelto:** Dashboard ahora muestra agregación por Macro (VIVIR/TRABAJAR/DEBER/DISFRUTAR).
 
 > **Branch activa:** `feat/supabase-migration`. Ultimo commit: `b087130`. Backend migrado a Supabase (PostgreSQL + GoTrue Auth). **Supabase cloud es la fuente de verdad de datos** desde 2026-04-28; el PostgreSQL del VPS deja de ser autoritativo. n8n y bot Telegram se discontinúan; la carga de movimientos es exclusivamente vía app web. Deuda D1 (certificado self-signed PostgREST) resuelta implícitamente por la migración.
 >
@@ -23,9 +23,9 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 **Phase 4 (Migración Supabase) cerrada en rama `feat/supabase-migration`.** La app tiene auth real (email + password vía GoTrue), gating de App detrás de `LoginScreen`, `api.ts` reescrito con headers `apikey + Authorization: Bearer <JWT>` + interceptor 401-refresh, y RLS habilitado con policies compartidas para usuarios autenticados. El bloqueo histórico D1 (certificado self-signed) queda resuelto implícitamente al migrar a Supabase cloud.
 
-**🟢 Auditoría post-Supabase resuelta (2026-04-29):** Todos los 11 P0 blockers fueron fixeados. El repositorio está listo para feature work. Ver informe completo: `docs/technical/2026-04-29-auditoria-post-supabase.md`.
+**🟢 Auditoría post-Supabase resuelta (2026-04-29):** Todos los 11 P0 blockers y la mayoría de los P1 issues fueron fixeados y mergeados a `main` (PR #8). El repositorio está listo para feature work. Ver informe completo: `docs/technical/2026-04-29-auditoria-post-supabase.md`.
 
-**Infraestructura operativa:** Supabase (PostgreSQL + GoTrue + PostgREST) — fuente de verdad desde 2026-04-28. Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`. Firebase Hosting para deploy estático. VPS ya no es autoritativo; n8n y bot Telegram discontinuados.
+**Infraestructura operativa:** Supabase (PostgreSQL + GoTrue + PostgREST) — fuente de verdad desde 2026-04-28. Variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Firebase Hosting para deploy estático. VPS ya no es autoritativo; n8n y bot Telegram discontinuados.
 
 **Bloqueos resueltos (post-auditoría P0):**
 1. ✅ **P0-1/2 — Dashboard muestra balances correctos** — `parseFloat` antes de sumar + saldos agrupados por moneda (`formatCurrency(saldo, moneda)`). Commits `15df019`.
@@ -34,10 +34,10 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 4. ✅ **P0-6 — Campo `macro` persistido** — Agregado a `Movimiento` interface, derivado automáticamente de `UNIDAD_TO_MACRO[unidad]` en `useTransactions.addTransaction` y `useServicios.markAsPaid`. Migration `005` agrega columna a DB.
 5. ✅ **P0-7/8 — Defaults de taxonomía corregidos** — `TransactionForm` defaultea a `Vivienda / Alquiler`; `ServicesView` tiene dropdowns cascada de categoría/concepto.
 6. ✅ **P0-9 — Validación en CardsView** — Indicador visual cuando clasificación no existe en mapa + edición inline con selects cascada.
-7. ✅ **P0-11 — Archivos de entorno limpiados** — Eliminadas variables muertas de Firebase/n8n; `.env.production` removido del repo.
-8. ⚠️ **Pendiente manual:** Rotar clave anónima de Supabase en Dashboard → Project Settings → API → Regenerate.
+7. ✅ **P0-11 — Archivos de entorno limpiados + clave rotada** — Eliminadas variables muertas de Firebase/n8n; `.env.production` removido del repo. Clave anónima rotada a Publishable Key en Supabase Dashboard y en `.env.local`.
+8. ✅ **P1 fixes mergeados** — Named exports, auth validation (hydrate + runtime), SSR guards, budget hook con parseFloat, 3-tap rule, test fixtures, Modal tokens Editorial Orgánico, timezone fix, apiGetOne 5xx propagation, camelCase form state. Todo en PR #8.
 
-**Merge:** `feat/supabase-migration` mergeada a `main` con todos los fixes P0.
+**Merge:** `feat/supabase-migration` y `fix/p1-issues` mergeadas a `main`.
 
 **Deuda cerrada en Phase 4 (Supabase):**
 - ✅ D1 — Certificado self-signed → migración a Supabase cloud resuelve el problema de raíz
@@ -146,7 +146,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 ---
 
-### Phase 5 — Verificación, Deploy y Handoff a Agos [🔄 En progreso — Pausada por auditoría]
+### Phase 5 — Verificación, Deploy y Handoff a Agos [🔄 En progreso — Auditoría cerrada, feature work activo]
 
 **Objetivo:** App lista para que Agos la use sin fricción. Cerrar gaps críticos, deploy, testing manual.
 
@@ -154,14 +154,14 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 - [x] Datos migrados a Supabase cloud (`scripts/migrate-to-supabase.sh` ejecutado 2026-04-28)
 - [x] Auditoría integral post-Supabase completada (2026-04-29) → informe en `docs/technical/2026-04-29-auditoria-post-supabase.md`
-- [ ] Resolver 11 P0 blockers identificados en la auditoría (ver sección abajo)
-- [ ] Review integral pre-merge con `finanzas-reviewer` — COMPLETADO como parte de la auditoría
-- [ ] Merge `feat/supabase-migration` → `main`
-- [ ] Agregación por Macro en Dashboard (VIVIR/TRABAJAR/DEBER/DISFRUTAR en tiempo real)
-- [ ] Defaults "último usado" en TransactionForm (desbloquea regla 3 taps)
-- [ ] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx`
-- [ ] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales)
-- [ ] Seed de `medios_pago` con saldos reales
+- [x] Resolver 11 P0 blockers identificados en la auditoría (todos fixeados y mergeados)
+- [x] Review integral pre-merge con `finanzas-reviewer` — completado como parte de la auditoría
+- [x] Merge `feat/supabase-migration` → `main` — completado
+- [x] Agregación por Macro en Dashboard (VIVIR/TRABAJAR/DEBER/DISFRUTAR en tiempo real) — **G1** — commit `318d7c7`
+- [x] Defaults "último usado" en TransactionForm (desbloquea regla 3 taps) — commit `3696f08`
+- [ ] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx` — **G4**
+- [ ] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales) — **G5**
+- [ ] Seed de `medios_pago` con saldos reales — **G6**
 - [ ] Testing manual completo (spec + implementation plan)
 - [ ] Deploy a Firebase Hosting (`firebase deploy --only hosting`)
 - [ ] Verificación del flujo Agos: 3 taps desde FAB hasta gasto guardado
@@ -172,7 +172,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 > **Informe completo:** `docs/technical/2026-04-29-auditoria-post-supabase.md`
 > **Metodología:** 4 auditorías especializadas en paralelo (arquitectura, schema/API, FX/moneda, taxonomía) + inspección de residuos + consolidación.
-> **Estado:** ⚠️ REQUIERE CAMBIOS — 11 P0 blockers, 30+ P1, 20+ P2.
+> **Estado:** ✅ **RESUELTA** — 11 P0 blockers y ~25 P1 issues fixeados y mergeados a `main` (PR #8). Restan ~5 P1 y 20+ P2 en backlog.
 
 ### P0 — Bloqueantes (resolver antes de cualquier feature nueva)
 
@@ -223,7 +223,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 | ID | Gap | Módulo | Detalle |
 |----|-----|--------|---------|
-| G1 | **Sin resumen por Macro en Dashboard** | Dashboard | El norte del producto es *"¿Cuánto gastamos en vivir, deber y disfrutar?"*. El Dashboard no agrega gastos por Macro con color/tendencia. Agos no puede responder la pregunta central al abrir la app. |
+| ~~G1~~ | ~~**Sin resumen por Macro en Dashboard**~~ | ~~Dashboard~~ | ✅ **Resuelto** (2026-04-29) — Sección "¿En qué gastamos?" agregada con cards de 2x2 (VIVIR sage, TRABAJAR navy, DEBER amber, DISFRUTAR terracotta). Agrega `transactions` filtradas por mes donde `tipo === 'gasto'` usando campo `macro`. Commit `318d7c7`. |
 | G2 | **TransactionForm sin defaults "último usado"** | Movimientos | Los defaults son hardcodeados (`HOGAR`, `Vivienda y Vida Diaria`, `Abastecimiento`). La Regla de 3 Taps NO está desbloqueada para Agos. Se necesita persistir último movimiento usado (localStorage o `/movimientos?order=fecha_carga.desc&limit=1`). |
 | G3 | **Certificado TLS self-signed en PostgREST** | Infra | `ERR_CERT_AUTHORITY_INVALID` en browsers. Agos no puede usar la app desde su teléfono sin aceptar excepción manual por dispositivo. |
 
@@ -279,7 +279,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] Vencimientos de servicios del mes desde PostgreSQL
 - [x] Widget FX (Cotizaciones) integrado en Dashboard
 - [x] Diseño "Editorial Orgánico" aplicado
-- [ ] **Resumen por Macro en tiempo real** — **G1**
+- [x] **Resumen por Macro en tiempo real** — **G1** — commit `318d7c7`
 
 ### Cotizaciones FX
 
@@ -315,7 +315,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 | ID | Item | Severidad | Estado | Detalle |
 |----|------|-----------|--------|---------|
 | ~~D1~~ | ~~Certificado self-signed en PostgREST~~ | 🔴 Alta | ✅ Resuelto | Migración a Supabase cloud elimina el problema de raíz. |
-| D2 | Defaults "último usado" en TransactionForm | 🔴 Alta | Pendiente | La regla de 3 taps para Agos no está desbloqueada. Se necesita localStorage o `GET /movimientos?order=fecha_carga.desc&limit=1`. Confirmado por P1-TAX-2. |
+| ~~D2~~ | ~~Defaults "último usado" en TransactionForm~~ | ~~🔴 Alta~~ | ✅ **Resuelto** | `3696f08` — persistencia en `localStorage` con `LAST_USED_KEY`. Defaults de unidad/categoría/concepto pre-poblados desde último gasto guardado. |
 | D3 | Dashboard sin agregación por Macro | 🔴 Alta | Pendiente | La pregunta central ("¿Cuánto gastamos en VIVIR, DEBER, DISFRUTAR?") no se puede responder al abrir la app. Agrávado por P0-1/P0-2 (balances incorrectos). |
 | D4 | `useCotizaciones` sin fetch a CriptoYa | 🟡 Media | Pendiente | Solo lee de cache PostgREST. Si no hay datos precargados, el widget y la vista muestran vacío. |
 | D5 | `AnalisisView` es stub vacío | 🟡 Media | Pendiente | Sin Recharts, sin lazy loading. Deuda significativa para la visión de BI desktop-first. |
@@ -331,7 +331,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 | D15 | **P0-7/8: Defaults de taxonomía inválidos** | ✅ Resuelto | `abb615d`, `a440c22` | Defaults corregidos + dropdowns cascada en ServicesView. |
 | D16 | **P0-9: CardsView sin validación de clasificación** | ✅ Resuelto | `2135c80` | Validación visual + edición inline con selects cascada. |
 | D17 | **P0-10: Tablas migration 002 sin RLS** | ✅ Resuelto | `be1c64b` | Tablas eliminadas (migration `006`). Surface area cerrada. |
-| D18 | **P0-11: Clave anónima de Supabase en git** | ✅ Parcial | `f5d08e0` | Archivos limpiados; `.env.production` eliminado. **Pendiente manual:** rotar key en Supabase Dashboard. |
+| ~~D18~~ | ~~**P0-11: Clave anónima de Supabase en git**~~ | ~~🔴 Alta~~ | ✅ **Resuelto** | `f5d08e0` + rotación manual. Clave anónima rotada a Publishable Key en Supabase Dashboard; `.env.local` actualizado. `.env.production` eliminado del repo. |
 
 **Deuda cerrada en Phase 3:**
 - ~~`App.tsx` desalineado con spec~~ → corregido (Screen type alineado, uiStore conectado)

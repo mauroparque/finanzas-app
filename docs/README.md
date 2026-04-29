@@ -115,7 +115,7 @@ Resumen de gaps críticos (actualizado post-auditoría 2026-04-29):
 
 | ID | Gap | Estado |
 |----|-----|--------|
-| G1 | Sin resumen por Macro en Dashboard | Pendiente (agravado por P0-1/P0-2: balances incorrectos) |
+| ~~G1~~ | ~~Sin resumen por Macro en Dashboard~~ | ✅ Resuelto (2026-04-29) — Dashboard muestra agregación por Macro en cards 2x2 |
 | G2 | TransactionForm sin defaults "último usado" | Pendiente (agravado por P0-7: defaults inválidos) |
 | G3 | Certificado TLS self-signed (resuelto por migración Supabase) | ✅ Resuelto |
 | G4 | `useCotizaciones` sin fetch a CriptoYa | Pendiente |
