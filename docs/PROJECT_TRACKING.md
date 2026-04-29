@@ -159,7 +159,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] Merge `feat/supabase-migration` → `main` — completado
 - [x] Agregación por Macro en Dashboard (VIVIR/TRABAJAR/DEBER/DISFRUTAR en tiempo real) — **G1** — commit `318d7c7`
 - [x] Defaults "último usado" en TransactionForm (desbloquea regla 3 taps) — commit `3696f08`
-- [ ] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx` — **G4**
+- [x] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx` — **G4** — commit `becec49`
 - [ ] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales) — **G5**
 - [ ] Seed de `medios_pago` con saldos reales — **G6**
 - [ ] Testing manual completo (spec + implementation plan)
@@ -231,7 +231,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 
 | ID | Gap | Módulo | Detalle |
 |----|-----|--------|---------|
-| G4 | **`useCotizaciones` solo lee cache PostgREST** | Cotizaciones FX | No llama a CriptoYa (`/api/dolar`, `/api/brl`). El widget muestra vacío si no hay datos precargados en `cotizaciones_fx`. Falta fetch → write-back → display. |
+| ~~G4~~ | ~~**`useCotizaciones` solo lee cache PostgREST**~~ | ~~Cotizaciones FX~~ | ✅ **Resuelto** (2026-04-29) — `useCotizaciones` ahora hace fetch paralelo a `https://criptoya.com/api/dolar` y `/api/brl`, parsea `ask`/`bid`/`time` a `CotizacionFX`, hace write-back fire-and-forget a `cotizaciones_fx` vía `apiPost`, y mergea + deduplica por `par`+`tipo`. Commit `becec49`. |
 | G5 | **`AnalisisView` es stub vacío** | Análisis | Muestra *"Vista de análisis — próximamente"*. Sin Recharts, sin lazy loading, sin tendencias. Era esperado como stub, pero es deuda significativa para la visión de BI desktop-first. |
 | G6 | **`saldo` en `medios_pago` = 0 en la DB** | Datos | Las columnas existen pero los valores son 0. El Dashboard muestra balance $0.00 hasta que se carguen saldos iniciales. |
 
@@ -286,7 +286,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] `useCotizaciones.ts` creado (lee de PostgREST cache)
 - [x] `CotizacionesView.tsx` mostrando rates desde datos cache
 - [x] `CotizacionWidget.tsx` en Dashboard
-- [ ] **Fetch a CriptoYa API** (`/api/dolar`, `/api/brl`) — **G4**
+- [x] **Fetch a CriptoYa API** (`/api/dolar`, `/api/brl`) — **G4** — commit `becec49`
 - [ ] **Write-back a `cotizaciones_fx`** — **G8**
 
 ### Análisis
