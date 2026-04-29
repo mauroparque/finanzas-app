@@ -1,6 +1,7 @@
-import { Home, CreditCard, ClipboardCheck, TrendingUp, DollarSign, List } from 'lucide-react';
+import { Home, CreditCard, ClipboardCheck, TrendingUp, DollarSign, List, LogOut } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { cn } from '../../../utils/cn';
+import { useAuthStore } from '../../../store/authStore';
 import type { Screen } from '../../../types';
 
 interface SidebarProps {
@@ -41,6 +42,16 @@ export function Sidebar({ activeScreen, onNavigate }: SidebarProps) {
           </button>
         ))}
       </nav>
+      <div className="px-3 pb-4">
+        <button
+          onClick={() => useAuthStore.getState().signOut()}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-stone-500 hover:text-stone-800"
+          aria-label="Cerrar sesión"
+        >
+          <LogOut size={18} />
+          <span>Salir</span>
+        </button>
+      </div>
     </aside>
   );
 }
