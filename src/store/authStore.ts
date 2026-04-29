@@ -16,6 +16,19 @@ interface AuthState {
   hydrate: () => void;
 }
 
+function isValidSession(obj: unknown): obj is { session: SupabaseSession } {
+  if (!obj || typeof obj !== 'object') return false;
+  const o = obj as Record<string, unknown>;
+  if (!o.session || typeof o.session !== 'object') return false;
+  const s = o.session as Record<string, unknown>;
+  return (
+    typeof s.access_token === 'string' &&
+    typeof s.refresh_token === 'string' &&
+    typeof s.expires_at === 'number' &&
+    typeof s.token_type === 'string'
+  );
+}
+
 const persist = (session: SupabaseSession | null) => {
   if (session) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ session }));
@@ -71,12 +84,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as { session: SupabaseSession };
+      const parsed = JSON.parse(raw);
+      if (!isValidSession(parsed)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
       const now = Math.floor(Date.now() / 1000);
       if (parsed.session.expires_at > now) {
         set({ session: parsed.session, status: 'authenticated' });
       } else {
-        localStorage.removeItem(STORAGE_KEY);
+        // P1-SCH-8: Attempt silent refresh
+        get().refresh().then(fresh => {
+          if (!fresh) localStorage.removeItem(STORAGE_KEY);
+        });
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);
