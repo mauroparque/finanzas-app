@@ -31,10 +31,12 @@ const ServicesView: React.FC<ServicesViewProps> = ({ onBack }) => {
   });
 
   const handleToggleEstado = (id: number, currentEstado: EstadoPrevisto) => {
-    let nextEstado: EstadoPrevisto = 'PENDING';
-    if (currentEstado === 'PENDING') nextEstado = 'RESERVED';
-    else if (currentEstado === 'RESERVED') nextEstado = 'PAGADO';
-    updateEstado(id, nextEstado);
+    if (currentEstado === 'PENDING') {
+      updateEstado(id, 'RESERVED');
+    } else if (currentEstado === 'RESERVED') {
+      updateEstado(id, 'PENDING');
+    }
+    // PAGADO is only reachable via markAsPaid (dual-write)
   };
 
   const handleStartPay = (id: number) => {
