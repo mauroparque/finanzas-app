@@ -12,7 +12,7 @@ import { apiGet } from '../config/api';
 const mockPresupuesto = (overrides: Partial<PresupuestoDefinicion> = {}): PresupuestoDefinicion => ({
   id: 1,
   tipo_objetivo: 'categoria',
-  nombre_objetivo: 'Vivienda y Vida Diaria',
+  nombre_objetivo: 'Vivienda',
   limite: 50000,
   moneda: 'ARS',
   unidad: 'HOGAR',

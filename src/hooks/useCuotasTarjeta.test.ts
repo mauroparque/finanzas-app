@@ -4,7 +4,7 @@ import { useCuotasTarjeta } from './useCuotasTarjeta';
 
 vi.mock('../config/api', () => ({
   apiGet: vi.fn().mockResolvedValue([
-    { id: 1, descripcion: 'TV Samsung', tarjeta: 'Visa', monto_cuota: 15000, moneda: 'ARS', cuota_actual: 3, total_cuotas: 12, fecha_inicio: '2026-01-15', unidad: 'HOGAR', categoria: 'Vivienda y Vida Diaria', concepto: 'Equipamiento', detalle: 'TV Samurai 55"', activo: true },
+    { id: 1, descripcion: 'TV Samsung', tarjeta: 'Visa', monto_cuota: 15000, moneda: 'ARS', cuota_actual: 3, total_cuotas: 12, fecha_inicio: '2026-01-15', unidad: 'HOGAR', categoria: 'Vivienda', concepto: 'Alquiler', detalle: 'TV Samurai 55"', activo: true },
   ]),
   apiPatch: vi.fn(),
 }));
