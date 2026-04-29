@@ -12,8 +12,13 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     const [show, setShow] = useState(isOpen);
 
     useEffect(() => {
-        if (isOpen) setShow(true);
-        else setTimeout(() => setShow(false), 300); // Wait for animation
+        if (isOpen) {
+            const timer = setTimeout(() => setShow(true), 10);
+            return () => clearTimeout(timer);
+        } else {
+            const timer = setTimeout(() => setShow(false), 300);
+            return () => clearTimeout(timer);
+        }
     }, [isOpen]);
 
     if (!show && !isOpen) return null;
@@ -28,14 +33,14 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
             {/* Content */}
             <div className={`
-        relative w-full sm:max-w-md bg-slate-900 border-t sm:border border-white/10 rounded-t-[2rem] sm:rounded-2xl p-6 shadow-2xl transform transition-all duration-300
+        relative w-full sm:max-w-md bg-stone-900 border-t sm:border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl transform transition-all duration-300
         ${isOpen ? 'translate-y-0 scale-100' : 'translate-y-full sm:translate-y-10 sm:scale-95'}
       `}>
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-white">{title}</h3>
                     <button
                         onClick={onClose}
-                        className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+                        className="p-2 bg-stone-800 rounded-full text-stone-400 hover:text-white transition-colors"
                     >
                         <X size={20} />
                     </button>
