@@ -2,8 +2,8 @@
 
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
-**Última actualización:** 2026-04-29 (v5.1 — Phase 5 en progreso, G1 resuelto)  
-**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio (named exports, SSR guards, test fixtures). **P0-11 resuelto:** clave anónica rotada a Publishable Key; variables de entorno limpias. **Phase 5 activa:** feature work desbloqueado. **G1 resuelto:** Dashboard ahora muestra agregación por Macro (VIVIR/TRABAJAR/DEBER/DISFRUTAR).
+**Última actualización:** 2026-04-29 (v5.3 — Phase 5 en progreso, G1/G4/G5 resueltos)  
+**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio. **Phase 5 avanzada:** G1 (Dashboard Macro), G4 (CriptoYa fetch+write-back), y G5 (AnalisisView Recharts) implementados y mergeados a `main`. Pendiente: G6 (seed saldos reales), testing manual, deploy y verificación del flujo Agos.
 
 > **Branch activa:** `feat/supabase-migration`. Ultimo commit: `b087130`. Backend migrado a Supabase (PostgreSQL + GoTrue Auth). **Supabase cloud es la fuente de verdad de datos** desde 2026-04-28; el PostgreSQL del VPS deja de ser autoritativo. n8n y bot Telegram se discontinúan; la carga de movimientos es exclusivamente vía app web. Deuda D1 (certificado self-signed PostgREST) resuelta implícitamente por la migración.
 >
