@@ -1,25 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { Wallet, Calendar, ChevronLeft, ChevronRight, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useMediosPago } from '../hooks/useMediosPago';
 import { usePresupuestos } from '../hooks/usePresupuestos';
 import { useServicios } from '../hooks/useServicios';
 import { useTransactions } from '../hooks/useTransactions';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { useCotizaciones } from '../hooks/useCotizaciones';
-import { Card } from './common/ui/Card';
-import { Badge } from './common/ui/Badge';
-import { CotizacionWidget } from './common/CotizacionWidget';
 import { BalanceAccordion } from './dashboard/BalanceAccordion';
 import { MacroSummary } from './dashboard/MacroSummary';
 import { MacroPieChart } from './dashboard/MacroPieChart';
 import { BudgetAndDeadlines } from './dashboard/BudgetAndDeadlines';
 import { FxTicker } from './dashboard/FxTicker';
 import { useUIStore } from '../store/uiStore';
-import { formatCurrency } from '../utils/formatters';
 
 export function Dashboard() {
   const { accounts, loading: loadingAccounts } = useMediosPago();
-  const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
+  const { presupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
   const { rates, loading: loadingRates, refresh: refreshRates } = useCotizaciones();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date());
@@ -41,27 +37,6 @@ export function Dashboard() {
     });
   };
 
-  const balancesByCurrency = useMemo(() => {
-    const map: Record<string, number> = {};
-    accounts.forEach(acc => {
-      const moneda = acc.moneda;
-      map[moneda] = (map[moneda] || 0) + parseFloat(String(acc.saldo));
-    });
-    return map;
-  }, [accounts]);
-
-  const spentByMacro = useMemo(() => {
-    const map: Record<string, number> = {};
-    transactions
-      .filter(t => t.tipo === 'gasto')
-      .forEach(t => {
-        const macro = t.macro || 'VIVIR';
-        const monto = parseFloat(String(t.monto));
-        map[macro] = (map[macro] || 0) + monto;
-      });
-    return map;
-  }, [transactions]);
-
   const upcomingDeadlines = useMemo(() =>
     movimientosPrevistos
       .filter(mp => mp.estado !== 'PAGADO')
@@ -79,31 +54,6 @@ export function Dashboard() {
 
   const handleNavigateToCotizaciones = () => {
     setActiveScreen('cotizaciones');
-  };
-
-  const getCategoryIcon = (category: string) => {
-    const c = category.toLowerCase();
-    if (c.includes('aliment') || c.includes('comida') || c.includes('super')) return <ShoppingBag size={18} />;
-    if (c.includes('animal') || c.includes('mascota')) return <PawPrint size={18} />;
-    if (c.includes('servici') || c.includes('impuesto')) return <Coffee size={18} />;
-    return <ShoppingBag size={18} />;
-  };
-
-  // Static Tailwind JIT-safe color mappings
-  const bgMap: Record<string, string> = {
-    emerald: 'bg-emerald-500/10',
-    amber: 'bg-amber-500/10',
-    rose: 'bg-rose-500/10',
-  };
-  const textMap: Record<string, string> = {
-    emerald: 'text-emerald-600',
-    amber: 'text-amber-600',
-    rose: 'text-rose-600',
-  };
-  const barMap: Record<string, string> = {
-    emerald: 'bg-emerald-500',
-    amber: 'bg-amber-500',
-    rose: 'bg-rose-500',
   };
 
   if (loadingAccounts && accounts.length === 0) {
