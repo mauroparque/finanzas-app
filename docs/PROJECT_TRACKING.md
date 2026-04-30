@@ -3,7 +3,7 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-29 (v5.3 — Phase 5 en progreso, G1/G4/G5 resueltos)  
-**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio. **Phase 5 avanzada:** G1 (Dashboard Macro), G4 (CriptoYa fetch+write-back), y G5 (AnalisisView Recharts) implementados y mergeados a `main`. Pendiente: G6 (seed saldos reales), testing manual, deploy y verificación del flujo Agos.
+**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio. **Phase 5 avanzada:** G1 (Dashboard Macro), G4 (CriptoYa fetch+write-back), G5 (AnalisisView Recharts), y G6 (estructura de medios_pago corregida) implementados y mergeados a `main`. Pendiente: seed manual de saldos reales, testing manual, deploy y verificación del flujo Agos.
 
 > **Branch activa:** `feat/supabase-migration`. Ultimo commit: `b087130`. Backend migrado a Supabase (PostgreSQL + GoTrue Auth). **Supabase cloud es la fuente de verdad de datos** desde 2026-04-28; el PostgreSQL del VPS deja de ser autoritativo. n8n y bot Telegram se discontinúan; la carga de movimientos es exclusivamente vía app web. Deuda D1 (certificado self-signed PostgREST) resuelta implícitamente por la migración.
 >
@@ -161,7 +161,8 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] Defaults "último usado" en TransactionForm (desbloquea regla 3 taps) — commit `3696f08`
 - [x] `useCotizaciones` con fetch a CriptoYa y write-back a `cotizaciones_fx` — **G4** — commit `becec49`
 - [x] `AnalisisView` con Recharts (tendencias por Macro, comparativas mensuales) — **G5** — commit `f38fdfb`
-- [ ] Seed de `medios_pago` con saldos reales — **G6**
+- [x] Estructura de `medios_pago` corregida (monedas, tarjetas individuales) — **G6** — commit `dfff625`
+- [ ] Seed manual de saldos reales en Supabase SQL Editor — runbook: `docs/runbooks/seed-saldos-medios-pago.sql`
 - [ ] Testing manual completo (spec + implementation plan)
 - [ ] Deploy a Firebase Hosting (`firebase deploy --only hosting`)
 - [ ] Verificación del flujo Agos: 3 taps desde FAB hasta gasto guardado
@@ -233,7 +234,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 |----|-----|--------|---------|
 | ~~G4~~ | ~~**`useCotizaciones` solo lee cache PostgREST**~~ | ~~Cotizaciones FX~~ | ✅ **Resuelto** (2026-04-29) — `useCotizaciones` ahora hace fetch paralelo a `https://criptoya.com/api/dolar` y `/api/brl`, parsea `ask`/`bid`/`time` a `CotizacionFX`, hace write-back fire-and-forget a `cotizaciones_fx` vía `apiPost`, y mergea + deduplica por `par`+`tipo`. Commit `becec49`. |
 | ~~G5~~ | ~~**`AnalisisView` es stub vacío**~~ | ~~Análisis~~ | ✅ **Resuelto** (2026-04-29) — Reemplazado stub por `AnalisisView` con `MacroTrendChart` (stacked `AreaChart` de Recharts). Muestra evolución diaria del mes agrupada por Macro (VIVIR sage, TRABAJAR navy, DEBER amber, DISFRUTAR terracotta). Datos de `useTransactions({ month })`. Commit `f38fdfb`. |
-| G6 | **`saldo` en `medios_pago` = 0 en la DB** | Datos | Las columnas existen pero los valores son 0. El Dashboard muestra balance $0.00 hasta que se carguen saldos iniciales. |
+| ~~G6~~ | ~~**`saldo` en `medios_pago` = 0 en la DB**~~ | ~~Datos~~ | ✅ **Estructura resuelta** (2026-04-29) — Migration 008 corrige monedas de exchanges (Fiwind→USDT, DolarApp/Prex/Brubank→USD), elimina "Tarjeta de crédito" genérica, agrega 3 tarjetas individuales (Visa BNA, Mastercard BNA, Visa BBVA) con `tipo = 'Crédito'`. Concepto documentado: saldo de tarjeta = DEUDA. **Pendiente manual:** ejecutar `docs/runbooks/seed-saldos-medios-pago.sql` en Supabase SQL Editor con saldos reales. Commit `dfff625`. |
 
 ### 🟢 Bajo impacto (para iteraciones futuras)
 
