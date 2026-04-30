@@ -30,6 +30,14 @@ UPDATE medios_pago SET moneda = 'USD' WHERE nombre IN ('DolarApp', 'Prex', 'Brub
 -- 3. Remove generic "Tarjeta de crédito"
 DELETE FROM medios_pago WHERE nombre = 'Tarjeta de crédito';
 
+-- 3b. Fix serial sequence after manual/legacy inserts with explicit IDs
+-- (e.g. Personal Pay Agos was inserted with id=12, leaving the sequence behind)
+SELECT setval(
+  pg_get_serial_sequence('medios_pago', 'id'),
+  coalesce((SELECT MAX(id) FROM medios_pago), 0) + 1,
+  false
+);
+
 -- 4. Add individual credit cards
 -- NOTE: tipo = 'Crédito', moneda = 'ARS'
 -- The saldo represents DEBT (positive = you owe money).
