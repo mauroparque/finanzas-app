@@ -9,6 +9,9 @@ import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
 import { BalanceAccordion } from './dashboard/BalanceAccordion';
+import { MacroSummary } from './dashboard/MacroSummary';
+import { MacroPieChart } from './dashboard/MacroPieChart';
+import { useUIStore } from '../store/uiStore';
 import { formatCurrency } from '../utils/formatters';
 
 export function Dashboard() {
@@ -63,6 +66,12 @@ export function Dashboard() {
   );
 
   const presupuestosConGasto = useBudgetStatus(presupuestos, transactions);
+
+  const { setActiveScreen } = useUIStore();
+
+  const handleMacroClick = () => {
+    setActiveScreen('movimientos');
+  };
 
   const getCategoryIcon = (category: string) => {
     const c = category.toLowerCase();
@@ -134,45 +143,8 @@ export function Dashboard() {
       <BalanceAccordion accounts={accounts} />
 
       {/* Macro Summary */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <h4 className="font-serif font-bold text-stone-800 text-lg">
-            ¿En qué gastamos?
-          </h4>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {(['VIVIR', 'TRABAJAR', 'DEBER', 'DISFRUTAR'] as const).map(macro => {
-            const spent = spentByMacro[macro] || 0;
-            const labels: Record<string, string> = {
-              VIVIR: 'Vivir',
-              TRABAJAR: 'Trabajar',
-              DEBER: 'Deber',
-              DISFRUTAR: 'Disfrutar',
-            };
-            const colors: Record<string, { bg: string; text: string }> = {
-              VIVIR: { bg: 'bg-sage-500/10', text: 'text-sage-600' },
-              TRABAJAR: { bg: 'bg-navy-500/10', text: 'text-navy-600' },
-              DEBER: { bg: 'bg-amber-500/10', text: 'text-amber-600' },
-              DISFRUTAR: { bg: 'bg-terracotta-500/10', text: 'text-terracotta-600' },
-            };
-            const c = colors[macro] || colors.VIVIR;
-
-            return (
-              <Card key={macro} padding="md" shadow="soft" className={c.bg}>
-                <div className="flex flex-col">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${c.text} mb-1`}>
-                    {labels[macro]}
-                  </span>
-                  <span className="text-lg font-serif font-bold text-stone-800 tracking-tight">
-                    {formatCurrency(spent, 'ARS')}
-                  </span>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+      <MacroSummary transactions={transactions} onMacroClick={handleMacroClick} />
+      <MacroPieChart transactions={transactions} />
 
       {/* Cotizaciones FX Widget */}
       <CotizacionWidget />
