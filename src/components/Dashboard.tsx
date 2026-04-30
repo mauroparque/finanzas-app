@@ -5,6 +5,7 @@ import { usePresupuestos } from '../hooks/usePresupuestos';
 import { useServicios } from '../hooks/useServicios';
 import { useTransactions } from '../hooks/useTransactions';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
+import { useCotizaciones } from '../hooks/useCotizaciones';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
@@ -12,6 +13,7 @@ import { BalanceAccordion } from './dashboard/BalanceAccordion';
 import { MacroSummary } from './dashboard/MacroSummary';
 import { MacroPieChart } from './dashboard/MacroPieChart';
 import { BudgetAndDeadlines } from './dashboard/BudgetAndDeadlines';
+import { FxTicker } from './dashboard/FxTicker';
 import { useUIStore } from '../store/uiStore';
 import { formatCurrency } from '../utils/formatters';
 
@@ -19,6 +21,7 @@ export function Dashboard() {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
+  const { rates, loading: loadingRates, refresh: refreshRates } = useCotizaciones();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date());
   const { transactions } = useTransactions({ month: selectedMonth });
 
@@ -72,6 +75,10 @@ export function Dashboard() {
 
   const handleMacroClick = () => {
     setActiveScreen('movimientos');
+  };
+
+  const handleNavigateToCotizaciones = () => {
+    setActiveScreen('cotizaciones');
   };
 
   const getCategoryIcon = (category: string) => {
@@ -147,8 +154,13 @@ export function Dashboard() {
       <MacroSummary transactions={transactions} onMacroClick={handleMacroClick} />
       <MacroPieChart transactions={transactions} />
 
-      {/* Cotizaciones FX Widget */}
-      <CotizacionWidget />
+      {/* Cotizaciones FX Ticker */}
+      <FxTicker
+        rates={rates}
+        onRefresh={refreshRates}
+        loading={loadingRates}
+        onNavigate={handleNavigateToCotizaciones}
+      />
 
       {/* Presupuestos + Vencimientos Compactos */}
       <BudgetAndDeadlines
