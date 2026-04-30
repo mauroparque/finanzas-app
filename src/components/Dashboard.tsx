@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Wallet, Calendar, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Wallet, Calendar, ChevronLeft, ChevronRight, ShoppingBag, PawPrint, Coffee, Info, ArrowRight, Loader2 } from 'lucide-react';
 import { useMediosPago } from '../hooks/useMediosPago';
 import { usePresupuestos } from '../hooks/usePresupuestos';
 import { useServicios } from '../hooks/useServicios';
@@ -14,8 +14,24 @@ export function Dashboard() {
   const { accounts, loading: loadingAccounts } = useMediosPago();
   const { presupuestos, loading: loadingPresupuestos } = usePresupuestos();
   const { movimientosPrevistos, servicios, loading: loadingServicios } = useServicios();
-  const monthFilter = useMemo(() => new Date(), []);
-  const { transactions } = useTransactions({ month: monthFilter });
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date());
+  const { transactions } = useTransactions({ month: selectedMonth });
+
+  const goToPrevMonth = () => {
+    setSelectedMonth(prev => {
+      const d = new Date(prev);
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    });
+  };
+
+  const goToNextMonth = () => {
+    setSelectedMonth(prev => {
+      const d = new Date(prev);
+      d.setMonth(d.getMonth() + 1);
+      return d;
+    });
+  };
 
   const balancesByCurrency = useMemo(() => {
     const map: Record<string, number> = {};
@@ -88,9 +104,25 @@ export function Dashboard() {
           <p className="text-stone-500 text-xs font-semibold uppercase tracking-wider mb-0.5">
             Familia Mau & Agos
           </p>
-          <h1 className="text-2xl font-serif font-bold text-stone-800 tracking-tight">
-            {new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
-          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPrevMonth}
+              className="p-1 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
+              aria-label="Mes anterior"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-serif font-bold text-stone-800 tracking-tight min-w-[180px] text-center">
+              {selectedMonth.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
+            </h1>
+            <button
+              onClick={goToNextMonth}
+              className="p-1 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
         <div className="w-10 h-10 bg-stone-100 rounded-full border border-stone-200 flex items-center justify-center text-terracotta-600 shadow-soft">
           <Calendar size={18} strokeWidth={2.5} />
