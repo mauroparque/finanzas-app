@@ -22,7 +22,7 @@ const CURRENCY_BG: Record<string, string> = {
 };
 
 export function BalanceAccordion({ accounts }: Props) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(['ARS']));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggle = useCallback((moneda: string) => {
     setExpanded(prev => {
@@ -49,7 +49,14 @@ export function BalanceAccordion({ accounts }: Props) {
 
     return Object.entries(map)
       .filter(([, data]) => data.total > 0)
-      .sort(([, a], [, b]) => b.total - a.total);
+      .sort(([, a], [, b]) => b.total - a.total)
+      .map(([moneda, data]) => [
+        moneda,
+        {
+          ...data,
+          accounts: data.accounts.sort((a, b) => parseFloat(String(b.saldo)) - parseFloat(String(a.saldo))),
+        },
+      ]) as [string, { total: number; accounts: MedioPago[] }][];
   }, [accounts]);
 
   if (accounts.length === 0) {
