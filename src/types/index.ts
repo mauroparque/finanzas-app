@@ -216,7 +216,7 @@ export type PrestamoInput = Omit<Prestamo, 'id'>;
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface CotizacionFX {
-  id: number;
+  id?: number;                       // Optional for freshly fetched rates before DB write
   par: string;                       // "USD_ARS", "BRL_ARS"
   tipo: string;                      // "blue", "oficial", "ccl", "mep", etc.
   compra: number;

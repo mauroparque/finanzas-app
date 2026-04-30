@@ -65,6 +65,8 @@ function dedupeRates(rates: CotizacionFX[]): CotizacionFX[] {
   return Array.from(map.values());
 }
 
+// TODO: Add unit tests for CriptoYa parsing, deduping, and cache merge.
+//       See useMediosPago.test.ts for patterns.
 export const useCotizaciones = () => {
   const [rates, setRates] = useState<CotizacionFX[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,13 +127,7 @@ export const useCotizaciones = () => {
 
       // 4. Merge fresh rates on top of cache and deduplicate
       setRates(prev => {
-        // Convert fresh rates to CotizacionFX-like objects for merging
-        // (they lack id, but dedupe and the widget only use par/tipo/timestamp)
-        const merged: CotizacionFX[] = [
-          // We cast because the widget and dedupe only care about par/tipo/timestamp/compra/venta
-          ...(freshRates as CotizacionFX[]),
-          ...prev,
-        ];
+        const merged: CotizacionFX[] = [...freshRates, ...prev];
         return dedupeRates(merged);
       });
     } catch (err) {

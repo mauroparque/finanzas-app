@@ -38,14 +38,16 @@ export function BalanceAccordion({ accounts }: Props) {
 
   const groups = useMemo(() => {
     const map: Record<string, { total: number; accounts: MedioPago[] }> = {};
-    accounts.forEach(acc => {
-      const saldo = parseFloat(String(acc.saldo));
-      if (!map[acc.moneda]) {
-        map[acc.moneda] = { total: 0, accounts: [] };
-      }
-      map[acc.moneda].total += saldo;
-      map[acc.moneda].accounts.push(acc);
-    });
+    accounts
+      .filter(acc => acc.tipo !== 'Crédito') // Exclude credit cards — saldo represents DEBT
+      .forEach(acc => {
+        const saldo = parseFloat(String(acc.saldo));
+        if (!map[acc.moneda]) {
+          map[acc.moneda] = { total: 0, accounts: [] };
+        }
+        map[acc.moneda].total += saldo;
+        map[acc.moneda].accounts.push(acc);
+      });
 
     return Object.entries(map)
       .filter(([, data]) => data.total > 0)

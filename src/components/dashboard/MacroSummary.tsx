@@ -42,7 +42,7 @@ export function MacroSummary({ transactions, onMacroClick }: Props) {
   const { spentByMacro, totalSpent } = useMemo(() => {
     const map: Record<string, number> = {};
     transactions
-      .filter(t => t.tipo === 'gasto')
+      .filter(t => t.tipo === 'gasto' && t.moneda === 'ARS')
       .forEach(t => {
         const macro = t.macro || 'VIVIR';
         const monto = parseFloat(String(t.monto));

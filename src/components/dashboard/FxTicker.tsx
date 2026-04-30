@@ -14,7 +14,6 @@ interface Props {
 const DISPLAY_SLOTS: { label: string; par: string; tipo: string }[] = [
   { label: 'Blue', par: 'USD_ARS', tipo: 'blue' },
   { label: 'Oficial', par: 'USD_ARS', tipo: 'oficial' },
-  { label: 'USDT', par: 'USDT_ARS', tipo: 'blue' },
 ];
 
 function timeAgo(timestamp?: string): string {

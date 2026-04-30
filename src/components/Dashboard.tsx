@@ -24,6 +24,7 @@ export function Dashboard() {
   const goToPrevMonth = () => {
     setSelectedMonth(prev => {
       const d = new Date(prev);
+      d.setDate(1); // Prevent month overflow (e.g. Mar 31 -> Feb)
       d.setMonth(d.getMonth() - 1);
       return d;
     });
@@ -32,6 +33,7 @@ export function Dashboard() {
   const goToNextMonth = () => {
     setSelectedMonth(prev => {
       const d = new Date(prev);
+      d.setDate(1); // Prevent month overflow (e.g. Mar 31 -> May)
       d.setMonth(d.getMonth() + 1);
       return d;
     });

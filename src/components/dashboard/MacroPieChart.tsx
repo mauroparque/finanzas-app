@@ -17,7 +17,7 @@ export function MacroPieChart({ transactions }: Props) {
   const data = useMemo(() => {
     const map: Record<string, number> = {};
     transactions
-      .filter(t => t.tipo === 'gasto')
+      .filter(t => t.tipo === 'gasto' && t.moneda === 'ARS')
       .forEach(t => {
         const macro = t.macro || 'VIVIR';
         map[macro] = (map[macro] || 0) + parseFloat(String(t.monto));
