@@ -8,6 +8,7 @@ import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { Card } from './common/ui/Card';
 import { Badge } from './common/ui/Badge';
 import { CotizacionWidget } from './common/CotizacionWidget';
+import { BalanceAccordion } from './dashboard/BalanceAccordion';
 import { formatCurrency } from '../utils/formatters';
 
 export function Dashboard() {
@@ -129,56 +130,8 @@ export function Dashboard() {
         </div>
       </header>
 
-      {/* Hero Balance Card */}
-      <Card padding="lg" shadow="card" className="bg-stone-50">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <p className="text-stone-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
-              <Wallet size={14} /> Saldos por Moneda
-            </p>
-            <div className="space-y-1">
-              {Object.entries(balancesByCurrency).map(([moneda, saldo]) => (
-                <h3 key={moneda} className="text-2xl font-serif font-bold text-stone-800 tracking-tighter">
-                  {formatCurrency(saldo, moneda)}
-                </h3>
-              ))}
-              {accounts.length === 0 && (
-                <h3 className="text-2xl font-serif font-bold text-stone-400 tracking-tighter">
-                  Sin cuentas activas
-                </h3>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          {accounts.slice(0, 2).map(acc => (
-            <div
-              key={acc.id}
-              className="flex-1 bg-white rounded-2xl p-3 border border-stone-200"
-            >
-              <div className="flex items-center gap-1.5 mb-1 text-stone-500">
-                <span className="text-[10px] font-bold uppercase opacity-80">{acc.nombre}</span>
-              </div>
-              <p className="text-base font-bold text-stone-800 tracking-tight">
-                {formatCurrency(acc.saldo, acc.moneda)}
-              </p>
-            </div>
-          ))}
-          {accounts.length === 0 && (
-            <div className="flex-1 bg-white rounded-2xl p-3 border border-stone-200">
-              <p className="text-xs text-stone-500">Sin cuentas activas</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-stone-200 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] text-stone-500">
-            <Info size={12} />
-            <span className="font-medium">Total Cuentas: {accounts.length}</span>
-          </div>
-        </div>
-      </Card>
+      {/* Hero Balance Accordion */}
+      <BalanceAccordion accounts={accounts} />
 
       {/* Macro Summary */}
       <section className="space-y-4">
