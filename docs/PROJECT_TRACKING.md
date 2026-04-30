@@ -3,7 +3,7 @@
 **Propietarios:** Mauro & Agos  
 **Creado:** 2026-04-20  
 **Última actualización:** 2026-04-29 (v5.3 — Phase 5 en progreso, G1/G4/G5 resueltos)  
-**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio. **Phase 5 avanzada:** G1 (Dashboard Macro), G4 (CriptoYa fetch+write-back), G5 (AnalisisView Recharts), y G6 (estructura de medios_pago corregida) implementados y mergeados a `main`. Pendiente: seed manual de saldos reales, testing manual, deploy y verificación del flujo Agos.
+**Estado general:** ✅ **11 P0 blockers resueltos** (2026-04-29). Ledger integrity restaurada, schema consolidado bajo `movimientos`, taxonomía corregida, auth reforzado, y código limpio. **Phase 5 avanzada:** G1 (Dashboard Macro), G4 (CriptoYa fetch+write-back), G5 (AnalisisView Recharts), G6 (estructura de medios_pago corregida), y deploy a Firebase Hosting completados. Pendiente: seed manual de saldos reales, testing manual, y verificación del flujo Agos.
 
 > **Branch activa:** `feat/supabase-migration`. Ultimo commit: `b087130`. Backend migrado a Supabase (PostgreSQL + GoTrue Auth). **Supabase cloud es la fuente de verdad de datos** desde 2026-04-28; el PostgreSQL del VPS deja de ser autoritativo. n8n y bot Telegram se discontinúan; la carga de movimientos es exclusivamente vía app web. Deuda D1 (certificado self-signed PostgREST) resuelta implícitamente por la migración.
 >
@@ -164,7 +164,7 @@ Usuarios: Mauro (carga ~85% de los gastos, usuario técnico) y Agos (usuaria no 
 - [x] Estructura de `medios_pago` corregida (monedas, tarjetas individuales) — **G6** — commit `dfff625`
 - [ ] Seed manual de saldos reales en Supabase SQL Editor — runbook: `docs/runbooks/seed-saldos-medios-pago.sql`
 - [ ] Testing manual completo (spec + implementation plan)
-- [ ] Deploy a Firebase Hosting (`firebase deploy --only hosting`)
+- [x] Deploy a Firebase Hosting (`firebase deploy --only hosting`) — 2026-04-29
 - [ ] Verificación del flujo Agos: 3 taps desde FAB hasta gasto guardado
 
 ---
