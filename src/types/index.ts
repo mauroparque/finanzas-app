@@ -69,14 +69,23 @@ export type MovimientoInput = Omit<Movimiento, 'id' | 'fecha_carga' | 'macro'> &
 // medios_pago — payment accounts/methods
 // ────────────────────────────────────────────────────────────────────────────
 
+export type TipoMedioPago =
+  | 'Billetera Virtual'
+  | 'Exchange'
+  | 'Crédito'
+  | 'Cash'
+  | 'Banco';
+
 export interface MedioPago {
   id: number;
-  nombre: string;                    // "Mercadopago Mauro", "Efectivo ARS"
-  tipo: 'banco' | 'virtual' | 'efectivo';
+  nombre: string;                    // "Mercado Pago Mau", "Efectivo ARS"
+  tipo: TipoMedioPago;
   moneda: Moneda;
   saldo: number;
   saldo_inicial: number;
   activo: boolean;
+  // Legacy column from initial schema — present in DB, not used in frontend
+  moneda_default?: string;
   color?: string;
   icono?: string;
 }
@@ -207,7 +216,7 @@ export type PrestamoInput = Omit<Prestamo, 'id'>;
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface CotizacionFX {
-  id: number;
+  id?: number;                       // Optional for freshly fetched rates before DB write
   par: string;                       // "USD_ARS", "BRL_ARS"
   tipo: string;                      // "blue", "oficial", "ccl", "mep", etc.
   compra: number;

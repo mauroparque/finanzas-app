@@ -115,12 +115,13 @@ Resumen de gaps críticos (actualizado post-auditoría 2026-04-29):
 
 | ID | Gap | Estado |
 |----|-----|--------|
-| G1 | Sin resumen por Macro en Dashboard | Pendiente (agravado por P0-1/P0-2: balances incorrectos) |
-| G2 | TransactionForm sin defaults "último usado" | Pendiente (agravado por P0-7: defaults inválidos) |
+| ~~G1~~ | ~~Sin resumen por Macro en Dashboard~~ | ✅ Resuelto (2026-04-29) — Dashboard muestra agregación por Macro en cards 2x2 |
+| G2 | TransactionForm sin defaults "último usado" | ✅ Resuelto (2026-04-29) — Persistencia en localStorage |
 | G3 | Certificado TLS self-signed (resuelto por migración Supabase) | ✅ Resuelto |
-| G4 | `useCotizaciones` sin fetch a CriptoYa | Pendiente |
-| G5 | `AnalisisView` es stub vacío | Pendiente |
-| G6 | `saldo` en `medios_pago` = 0 | Pendiente |
-| — | **11 P0 blockers de auditoría** (D9–D18 en PROJECT_TRACKING.md) | ⚠️ Bloqueante |
+| ~~G4~~ | ~~`useCotizaciones` sin fetch a CriptoYa~~ | ✅ Resuelto (2026-04-29) — Fetch directo a CriptoYa + write-back a cache |
+| ~~G5~~ | ~~`AnalisisView` es stub vacío~~ | ✅ Resuelto (2026-04-29) — Stacked AreaChart por Macro con Recharts |
+| ~~G6~~ | ~~`saldo` en `medios_pago` = 0~~ | ✅ Estructura resuelta — seed manual pendiente (runbook disponible) |
+| Deploy | Deploy a Firebase Hosting | ✅ Completado (2026-04-29) — https://lince-finanzas-app.web.app |
+| — | **11 P0 blockers de auditoría** (D9–D18 en PROJECT_TRACKING.md) | ✅ Todos resueltos |
 
 Ver detalle completo en [PROJECT_TRACKING.md — Hallazgos de la Auditoría Post-Supabase](./PROJECT_TRACKING.md#hallazgos-de-la-auditoría-post-supabase-2026-04-29).
