@@ -11,6 +11,7 @@ import { CotizacionWidget } from './common/CotizacionWidget';
 import { BalanceAccordion } from './dashboard/BalanceAccordion';
 import { MacroSummary } from './dashboard/MacroSummary';
 import { MacroPieChart } from './dashboard/MacroPieChart';
+import { BudgetAndDeadlines } from './dashboard/BudgetAndDeadlines';
 import { useUIStore } from '../store/uiStore';
 import { formatCurrency } from '../utils/formatters';
 
@@ -149,127 +150,13 @@ export function Dashboard() {
       {/* Cotizaciones FX Widget */}
       <CotizacionWidget />
 
-      {/* Semáforo de Presupuesto */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <h4 className="font-serif font-bold text-stone-800 text-lg">Presupuestos</h4>
-        </div>
-
-        <div className="grid gap-3">
-          {presupuestosConGasto.length === 0 ? (
-            <Card padding="md" shadow="soft">
-              <p className="text-center text-stone-500 text-sm">No hay presupuestos definidos.</p>
-            </Card>
-          ) : (
-            presupuestosConGasto.map((p) => {
-              const limite = parseFloat(String(p.limite));
-              const percentage = Math.min((p.spent / limite) * 100, 100);
-              const isOver = p.spent > limite;
-              const isNearLimit = percentage >= p.porcentaje_alerta;
-              let color = 'emerald';
-              if (isOver) color = 'rose';
-              else if (isNearLimit) color = 'amber';
-
-              return (
-                <Card key={p.id} padding="md" shadow="soft" className="group">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2.5 rounded-xl ${bgMap[color]} ${textMap[color]} group-hover:scale-110 transition-transform`}
-                      >
-                        {getCategoryIcon(p.nombre_objetivo)}
-                      </div>
-                      <div>
-                        <span className="block font-semibold text-stone-800 text-sm">
-                          {p.nombre_objetivo}
-                        </span>
-                        <span className={`text-[10px] font-bold uppercase ${isOver ? 'text-rose-600' : 'text-stone-500'}`}>
-                          {p.unidad || 'GLOBAL'} • {isOver ? 'Excedido' : 'En rango'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="block text-sm font-bold text-stone-800 tracking-tight">
-                        {formatCurrency(p.spent, p.moneda)}
-                      </span>
-                      <span className="text-[10px] text-stone-500 font-medium">
-                        de {formatCurrency(limite, p.moneda)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden relative">
-                    <div
-                      className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${barMap[color]}`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </Card>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      {/* Próximos Vencimientos */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <h4 className="font-serif font-bold text-stone-800 text-lg">Próximos Vencimientos</h4>
-        </div>
-
-        <Card padding="none" shadow="soft" className="overflow-hidden">
-          {loadingServicios ? (
-            <div className="p-8 text-center">
-              <Loader2 className="animate-spin text-terracotta-500 mx-auto" size={24} />
-            </div>
-          ) : upcomingDeadlines.length === 0 ? (
-            <div className="p-8 text-center text-stone-500 text-sm">
-              Sin vencimientos próximos
-            </div>
-          ) : (
-            upcomingDeadlines.map((mp) => {
-              const def = servicios.find(s => s.id === mp.referencia_id);
-              const monto = mp.monto_real ?? mp.monto_estimado ?? def?.monto_estimado;
-              return (
-                <div
-                  key={mp.id}
-                  className="flex justify-between items-center p-4 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        mp.estado === 'RESERVADO'
-                          ? 'bg-sage-500'
-                          : 'bg-terracotta-500 animate-pulse'
-                      }`}
-                    />
-                    <div>
-                      <p className="text-stone-800 font-semibold text-sm">{mp.nombre}</p>
-                      <p className="text-stone-500 text-[10px] font-bold uppercase">{mp.moneda}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {monto != null && (
-                      <p className="text-stone-800 font-bold text-sm tracking-tight">
-                        {formatCurrency(monto, mp.moneda)}
-                      </p>
-                    )}
-                    {def && (
-                      <div className="flex items-center justify-end gap-1 text-stone-500">
-                        <Calendar size={10} />
-                        <p className="text-[10px] font-medium">Día {def.dia_vencimiento}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <button className="w-full py-3 text-xs font-bold text-terracotta-600 uppercase tracking-widest hover:bg-terracotta-50 transition-colors flex items-center justify-center gap-2">
-            Ver todo el calendario <ArrowRight size={12} />
-          </button>
-        </Card>
-      </section>
+      {/* Presupuestos + Vencimientos Compactos */}
+      <BudgetAndDeadlines
+        presupuestosConGasto={presupuestosConGasto}
+        upcomingDeadlines={upcomingDeadlines}
+        servicios={servicios}
+        loadingServicios={loadingServicios}
+      />
     </div>
   );
 }
